@@ -21,3 +21,6 @@ dist/
 # Système
 .DS_Store
 Thumbs.db
+
+# Fichier de configuration local (contient des secrets)
+application-local.properties
