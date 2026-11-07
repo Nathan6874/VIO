@@ -1,10 +1,6 @@
 package ci.vio.backend.user;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.Instant;
 
@@ -20,6 +16,7 @@ public class User {
 
     private String prenom;
 
+    @Column(unique = true)
     private String whatsapp;
 
     private String password;

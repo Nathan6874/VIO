@@ -1,6 +1,7 @@
 package ci.vio.backend.auth;
 
 import ci.vio.backend.security.JwtService;
+import ci.vio.backend.user.DuplicateWhatsappException;
 import ci.vio.backend.user.User;
 import ci.vio.backend.user.UserResponse;
 import ci.vio.backend.user.UserService;
@@ -9,10 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -61,5 +61,11 @@ public class AuthController {
     }
 
     public record LoginResponse(String token) {
+    }
+
+    @ExceptionHandler(DuplicateWhatsappException.class)
+    public ResponseEntity<Map<String, String>> handleDuplicateWhatsapp(DuplicateWhatsappException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "DuplicateWhatsapp", "message", ex.getMessage()));
     }
 }

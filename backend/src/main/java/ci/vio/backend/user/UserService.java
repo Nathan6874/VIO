@@ -23,6 +23,10 @@ public class UserService {
     }
 
     public User create(String nom, String prenom, String whatsapp, String password) {
+
+        if(userRepository.findByWhatsapp(whatsapp).isPresent()){
+            throw new DuplicateWhatsappException(whatsapp);
+        }
         User user = new User();
         user.setNom(nom);
         user.setPrenom(prenom);
