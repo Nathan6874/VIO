@@ -1,8 +1,11 @@
 package ci.vio.backend.media;
 
 import ci.vio.backend.property.PropertyNotFoundException;
+import ci.vio.backend.user.User;
+import ci.vio.backend.user.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,25 +22,39 @@ import java.util.Map;
 public class MediaController {
 
     private final MediaService mediaService;
+    private final UserService userService;
 
-    public MediaController(MediaService mediaService) {
+    public MediaController(MediaService mediaService, UserService userService) {
         this.mediaService = mediaService;
+        this.userService = userService;
     }
 
     @GetMapping
-    public List<MediaResponse> findAll(@PathVariable Long propertyId) {
-        return mediaService.findAllByPropertyId(propertyId);
+    public List<MediaResponse> findAll(@PathVariable Long propertyId,
+                                       Authentication authentication) {
+        User currentUser = getUserFromAuthentication(authentication);
+        return mediaService.findAllByPropertyId(propertyId, currentUser);
     }
 
     @PostMapping
     public ResponseEntity<MediaResponse> create(@PathVariable Long propertyId,
-                                                @RequestBody CreateMediaRequest request) {
+                                                @RequestBody CreateMediaRequest request,
+                                                Authentication authentication) {
+        User currentUser = getUserFromAuthentication(authentication);
         MediaResponse media = mediaService.addMedia(
                 propertyId,
+                currentUser,
                 request.url(),
                 request.type()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(media);
+    }
+
+    private User getUserFromAuthentication(Authentication authentication) {
+        String whatsapp = authentication.getName();
+        return userService.findByWhatsapp(whatsapp)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Utilisateur authentifié introuvable : " + whatsapp));
     }
 
     @ExceptionHandler(PropertyNotFoundException.class)

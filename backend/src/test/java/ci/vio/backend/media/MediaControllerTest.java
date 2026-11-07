@@ -3,6 +3,8 @@ package ci.vio.backend.media;
 import ci.vio.backend.property.PropertyNotFoundException;
 import ci.vio.backend.security.JwtService;
 import ci.vio.backend.security.SecurityConfig;
+import ci.vio.backend.user.User;
+import ci.vio.backend.user.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -15,7 +17,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -36,14 +40,23 @@ class MediaControllerTest {
     private MediaService mediaService;
 
     @MockitoBean
+    private UserService userService;
+
+    @MockitoBean
     private JwtService jwtService;
 
     @MockitoBean
     private UserDetailsService userDetailsService;
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "+22501020304")
     void postMediaShouldReturn201() throws Exception {
+        User owner = new User();
+        owner.setId(6L);
+        owner.setWhatsapp("+22501020304");
+
+        when(userService.findByWhatsapp("+22501020304")).thenReturn(Optional.of(owner));
+
         MediaResponse response = new MediaResponse(
                 1L,
                 "https://example.com/photo1.jpg",
@@ -52,7 +65,7 @@ class MediaControllerTest {
                 Instant.parse("2026-11-07T00:00:00Z")
         );
 
-        when(mediaService.addMedia(eq(10L), anyString(), anyString()))
+        when(mediaService.addMedia(eq(10L), any(User.class), anyString(), anyString()))
                 .thenReturn(response);
 
         mockMvc.perform(post("/api/properties/10/media")
@@ -67,8 +80,14 @@ class MediaControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "+22501020304")
     void getMediaListShouldReturn200() throws Exception {
+        User owner = new User();
+        owner.setId(6L);
+        owner.setWhatsapp("+22501020304");
+
+        when(userService.findByWhatsapp("+22501020304")).thenReturn(Optional.of(owner));
+
         MediaResponse m1 = new MediaResponse(
                 1L, "https://example.com/photo1.jpg", "PHOTO", 10L,
                 Instant.parse("2026-11-07T00:00:00Z")
@@ -78,7 +97,8 @@ class MediaControllerTest {
                 Instant.parse("2026-11-07T00:01:00Z")
         );
 
-        when(mediaService.findAllByPropertyId(10L)).thenReturn(List.of(m1, m2));
+        when(mediaService.findAllByPropertyId(eq(10L), any(User.class)))
+                .thenReturn(List.of(m1, m2));
 
         mockMvc.perform(get("/api/properties/10/media"))
                 .andExpect(status().isOk())
@@ -89,9 +109,15 @@ class MediaControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "+22501020304")
     void postMediaOnUnknownPropertyShouldReturn404() throws Exception {
-        when(mediaService.addMedia(eq(99999L), anyString(), anyString()))
+        User owner = new User();
+        owner.setId(6L);
+        owner.setWhatsapp("+22501020304");
+
+        when(userService.findByWhatsapp("+22501020304")).thenReturn(Optional.of(owner));
+
+        when(mediaService.addMedia(eq(99999L), any(User.class), anyString(), anyString()))
                 .thenThrow(new PropertyNotFoundException(99999L));
 
         mockMvc.perform(post("/api/properties/99999/media")
