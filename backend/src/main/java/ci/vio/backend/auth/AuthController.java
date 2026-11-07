@@ -2,6 +2,7 @@ package ci.vio.backend.auth;
 
 import ci.vio.backend.security.JwtService;
 import ci.vio.backend.user.User;
+import ci.vio.backend.user.UserResponse;
 import ci.vio.backend.user.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,14 +31,14 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest request) {
         User user = userService.create(
                 request.nom(),
                 request.prenom(),
                 request.whatsapp(),
                 request.password()
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user));
     }
 
     @PostMapping("/login")

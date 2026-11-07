@@ -21,19 +21,19 @@ public class UserController {
     }
 
     @GetMapping
-    public List<User> findAll() {
-        return userService.findAll();
+    public List<UserResponse> findAll() {
+        return userService.findAll().stream().map(UserResponse::from).toList();
     }
 
     @PostMapping
-    public ResponseEntity<User> create(@RequestBody CreateUserRequest request) {
+    public ResponseEntity<UserResponse> create(@RequestBody CreateUserRequest request) {
         User user = userService.create(
                 request.nom(),
                 request.prenom(),
                 request.whatsapp(),
                 request.password()
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user));
     }
 
     public record CreateUserRequest(String nom, String prenom, String whatsapp, String password) {
