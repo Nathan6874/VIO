@@ -2,6 +2,8 @@ package ci.vio.backend.property;
 
 import ci.vio.backend.security.JwtService;
 import ci.vio.backend.security.SecurityConfig;
+import ci.vio.backend.user.User;
+import ci.vio.backend.user.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -14,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
@@ -36,42 +39,58 @@ class PropertyControllerTest {
     private PropertyService propertyService;
 
     @MockitoBean
+    private UserService userService;
+
+    @MockitoBean
     private JwtService jwtService;
 
     @MockitoBean
     private UserDetailsService userDetailsService;
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "+22501020304")
     void postPropertyShouldReturn201AndCreatedProperty() throws Exception {
-        Property property = new Property();
-        property.setId(1L);
-        property.setTitre("Appartement 3 pièces Cocody");
-        property.setDescription("Bel appartement rénové");
-        property.setVille("Abidjan");
-        property.setCommune("Cocody");
-        property.setPrix(250000.0);
-        property.setCreatedAt(Instant.parse("2026-11-07T00:00:00Z"));
+        User owner = new User();
+        owner.setId(1L);
+        owner.setWhatsapp("+22501020304");
 
-        when(propertyService.create(anyString(), anyString(), anyString(), anyString(), anyDouble()))
-                .thenReturn(property);
+        when(userService.findByWhatsapp("+22501020304")).thenReturn(Optional.of(owner));
+
+        PropertyResponse response = new PropertyResponse(
+                10L,
+                "Appartement 3 pièces Cocody",
+                "Bel appartement rénové",
+                "Abidjan",
+                "Cocody",
+                250000.0,
+                Instant.parse("2026-11-07T00:00:00Z"),
+                new PropertyResponse.OwnerInfo(1L, "Koffi", "Jean", "+22501020304")
+        );
+
+        when(propertyService.create(any(User.class), anyString(), anyString(),
+                anyString(), anyString(), anyDouble()))
+                .thenReturn(response);
 
         mockMvc.perform(post("/api/properties")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"titre\":\"Appartement 3 pièces Cocody\",\"description\":\"Bel appartement rénové\",\"ville\":\"Abidjan\",\"commune\":\"Cocody\",\"prix\":250000}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.id").value(10))
                 .andExpect(jsonPath("$.titre").value("Appartement 3 pièces Cocody"))
                 .andExpect(jsonPath("$.ville").value("Abidjan"))
-                .andExpect(jsonPath("$.commune").value("Cocody"))
-                .andExpect(jsonPath("$.prix").value(250000.0));
+                .andExpect(jsonPath("$.owner.whatsapp").value("+22501020304"));
     }
 
     @Test
-    @WithMockUser
-    void getPropertyListShouldReturn200AndEmptyList() throws Exception {
-        when(propertyService.findAll()).thenReturn(List.of());
+    @WithMockUser(username = "+22501020304")
+    void getPropertyListShouldReturn200AndOnlyOwnerProperties() throws Exception {
+        User owner = new User();
+        owner.setId(1L);
+        owner.setWhatsapp("+22501020304");
+
+        when(userService.findByWhatsapp("+22501020304")).thenReturn(Optional.of(owner));
+        when(propertyService.findAllByOwner(owner)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/properties"))
                 .andExpect(status().isOk())

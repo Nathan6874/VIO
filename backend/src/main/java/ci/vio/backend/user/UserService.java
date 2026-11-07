@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -29,5 +30,9 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(password));
         user.setCreatedAt(Instant.now());
         return userRepository.save(user);
+    }
+
+    public Optional<User> findByWhatsapp(String whatsapp) {
+        return userRepository.findByWhatsapp(whatsapp);
     }
 }

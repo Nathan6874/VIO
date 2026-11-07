@@ -1,6 +1,8 @@
 package ci.vio.backend.property;
 
+import ci.vio.backend.user.User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -14,19 +16,26 @@ public class PropertyService {
         this.propertyRepository = propertyRepository;
     }
 
-    public List<Property> findAll() {
-        return propertyRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<PropertyResponse> findAllByOwner(User owner) {
+        return propertyRepository.findByOwner(owner)
+                .stream()
+                .map(PropertyResponse::from)
+                .toList();
     }
 
-    public Property create(String titre, String description, String ville,
-                           String commune, Double prix) {
+    @Transactional
+    public PropertyResponse create(User owner, String titre, String description,
+                                   String ville, String commune, Double prix) {
         Property property = new Property();
+        property.setOwner(owner);
         property.setTitre(titre);
         property.setDescription(description);
         property.setVille(ville);
         property.setCommune(commune);
         property.setPrix(prix);
         property.setCreatedAt(Instant.now());
-        return propertyRepository.save(property);
+        Property saved = propertyRepository.save(property);
+        return PropertyResponse.from(saved);
     }
 }

@@ -1,5 +1,7 @@
 package ci.vio.backend.property;
 
+import ci.vio.backend.user.User;
+import ci.vio.backend.user.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -21,9 +23,21 @@ class PropertyRepositoryTest {
     @Autowired
     private PropertyRepository propertyRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Test
-    void saveAndFindAllShouldPersistProperty() {
+    void saveAndFindByOwnerShouldPersistProperty() {
+        User owner = new User();
+        owner.setNom("Koffi");
+        owner.setPrenom("Jean");
+        owner.setWhatsapp("+22501020304");
+        owner.setPassword("hashed");
+        owner.setCreatedAt(Instant.now());
+        User savedOwner = userRepository.save(owner);
+
         Property property = new Property();
+        property.setOwner(savedOwner);
         property.setTitre("Appartement 3 pièces Cocody");
         property.setDescription("Bel appartement rénové");
         property.setVille("Abidjan");
@@ -35,10 +49,10 @@ class PropertyRepositoryTest {
 
         assertThat(saved.getId()).isNotNull();
 
-        List<Property> all = propertyRepository.findAll();
-        assertThat(all).hasSize(1);
-        assertThat(all.get(0).getTitre()).isEqualTo("Appartement 3 pièces Cocody");
-        assertThat(all.get(0).getVille()).isEqualTo("Abidjan");
-        assertThat(all.get(0).getPrix()).isEqualTo(250000.0);
+        List<Property> byOwner = propertyRepository.findByOwner(savedOwner);
+        assertThat(byOwner).hasSize(1);
+        assertThat(byOwner.get(0).getTitre()).isEqualTo("Appartement 3 pièces Cocody");
+        assertThat(byOwner.get(0).getVille()).isEqualTo("Abidjan");
+        assertThat(byOwner.get(0).getPrix()).isEqualTo(250000.0);
     }
 }
