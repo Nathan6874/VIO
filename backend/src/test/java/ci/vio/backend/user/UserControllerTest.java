@@ -36,7 +36,7 @@ class UserControllerTest {
         user.setWhatsapp("+22501020304");
         user.setCreatedAt(Instant.parse("2026-11-05T00:00:00Z"));
 
-        when(userService.create(anyString(), anyString(), anyString())).thenReturn(user);
+        when(userService.create(anyString(), anyString(), anyString(), anyString())).thenReturn(user);
 
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)

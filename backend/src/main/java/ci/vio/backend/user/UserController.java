@@ -30,12 +30,12 @@ public class UserController {
         User user = userService.create(
                 request.nom(),
                 request.prenom(),
-                request.whatsapp()
+                request.whatsapp(),
+                request.password()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
-    // DTO pour la requête de création
-    public record CreateUserRequest(String nom, String prenom, String whatsapp) {
+    public record CreateUserRequest(String nom, String prenom, String whatsapp, String password) {
     }
 }

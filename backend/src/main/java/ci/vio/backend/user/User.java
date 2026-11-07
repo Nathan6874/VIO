@@ -22,6 +22,8 @@ public class User {
 
     private String whatsapp;
 
+    private String password;
+
     private Instant createdAt;
 
     // Constructeur vide requis par JPA
@@ -59,6 +61,14 @@ public class User {
 
     public void setWhatsapp(String whatsapp) {
         this.whatsapp = whatsapp;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public Instant getCreatedAt() {
