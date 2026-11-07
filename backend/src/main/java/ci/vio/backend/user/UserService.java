@@ -32,6 +32,7 @@ public class UserService {
         user.setPrenom(prenom);
         user.setWhatsapp(whatsapp);
         user.setPassword(passwordEncoder.encode(password));
+        user.setRole(UserRole.OWNER);
         user.setCreatedAt(Instant.now());
         return userRepository.save(user);
     }

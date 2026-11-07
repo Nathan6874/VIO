@@ -9,6 +9,7 @@ public record PropertyResponse(
         String ville,
         String commune,
         Double prix,
+        PropertyStatus status,
         Instant createdAt,
         OwnerInfo owner
 ) {
@@ -37,6 +38,7 @@ public record PropertyResponse(
                 property.getVille(),
                 property.getCommune(),
                 property.getPrix(),
+                property.getStatus(),
                 property.getCreatedAt(),
                 ownerInfo
         );

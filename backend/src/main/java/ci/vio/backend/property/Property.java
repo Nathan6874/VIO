@@ -9,6 +9,8 @@ import ci.vio.backend.user.User;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 import java.time.Instant;
 
@@ -35,6 +37,9 @@ public class Property {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private User owner;
+
+    @Enumerated(EnumType.STRING)
+    private PropertyStatus status = PropertyStatus.PENDING;
 
     public Property() {
     }
@@ -101,5 +106,13 @@ public class Property {
 
     public void setOwner(User owner) {
         this.owner = owner;
+    }
+
+    public PropertyStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(PropertyStatus status) {
+        this.status = status;
     }
 }

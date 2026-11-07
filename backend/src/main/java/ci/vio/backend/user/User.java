@@ -3,6 +3,8 @@ package ci.vio.backend.user;
 import jakarta.persistence.*;
 
 import java.time.Instant;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
 @Table(name = "users")
@@ -20,6 +22,9 @@ public class User {
     private String whatsapp;
 
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    private UserRole role = UserRole.OWNER;
 
     private Instant createdAt;
 
@@ -66,6 +71,14 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
     }
 
     public Instant getCreatedAt() {

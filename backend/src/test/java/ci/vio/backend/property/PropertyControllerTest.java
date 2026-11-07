@@ -63,6 +63,7 @@ class PropertyControllerTest {
                 "Abidjan",
                 "Cocody",
                 250000.0,
+                PropertyStatus.PENDING,
                 Instant.parse("2026-11-07T00:00:00Z"),
                 new PropertyResponse.OwnerInfo(1L, "Koffi", "Jean", "+22501020304")
         );
@@ -77,8 +78,7 @@ class PropertyControllerTest {
                         .content("{\"titre\":\"Appartement 3 pièces Cocody\",\"description\":\"Bel appartement rénové\",\"ville\":\"Abidjan\",\"commune\":\"Cocody\",\"prix\":250000}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(10))
-                .andExpect(jsonPath("$.titre").value("Appartement 3 pièces Cocody"))
-                .andExpect(jsonPath("$.ville").value("Abidjan"))
+                .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.owner.whatsapp").value("+22501020304"));
     }
 

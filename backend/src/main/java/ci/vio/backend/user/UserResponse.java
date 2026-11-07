@@ -7,6 +7,7 @@ public record UserResponse(
         String nom,
         String prenom,
         String whatsapp,
+        UserRole role,
         Instant createdAt
 ) {
     public static UserResponse from(User user) {
@@ -15,6 +16,7 @@ public record UserResponse(
                 user.getNom(),
                 user.getPrenom(),
                 user.getWhatsapp(),
+                user.getRole(),
                 user.getCreatedAt()
         );
     }
