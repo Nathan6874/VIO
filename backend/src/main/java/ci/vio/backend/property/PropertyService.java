@@ -38,4 +38,12 @@ public class PropertyService {
         Property saved = propertyRepository.save(property);
         return PropertyResponse.from(saved);
     }
+
+    @Transactional(readOnly = true)
+    public List<PropertyResponse> findAllApproved() {
+        return propertyRepository.findByStatus(PropertyStatus.APPROVED)
+                .stream()
+                .map(PropertyResponse::from)
+                .toList();
+    }
 }

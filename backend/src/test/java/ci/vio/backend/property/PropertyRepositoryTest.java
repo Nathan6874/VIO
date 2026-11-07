@@ -55,4 +55,40 @@ class PropertyRepositoryTest {
         assertThat(byOwner.get(0).getVille()).isEqualTo("Abidjan");
         assertThat(byOwner.get(0).getPrix()).isEqualTo(250000.0);
     }
+
+    @Test
+    void findByStatusShouldReturnOnlyMatchingProperties() {
+        User owner = new User();
+        owner.setNom("Koffi");
+        owner.setPrenom("Jean");
+        owner.setWhatsapp("+22501020304");
+        owner.setPassword("hashed");
+        owner.setCreatedAt(Instant.now());
+        User savedOwner = userRepository.save(owner);
+
+        Property pending = new Property();
+        pending.setOwner(savedOwner);
+        pending.setTitre("Pending property");
+        pending.setVille("Abidjan");
+        pending.setCommune("Cocody");
+        pending.setPrix(250000.0);
+        pending.setStatus(PropertyStatus.PENDING);
+        pending.setCreatedAt(Instant.now());
+        propertyRepository.save(pending);
+
+        Property approved = new Property();
+        approved.setOwner(savedOwner);
+        approved.setTitre("Approved property");
+        approved.setVille("Abidjan");
+        approved.setCommune("Yopougon");
+        approved.setPrix(450000.0);
+        approved.setStatus(PropertyStatus.APPROVED);
+        approved.setCreatedAt(Instant.now());
+        propertyRepository.save(approved);
+
+        List<Property> approvedList = propertyRepository.findByStatus(PropertyStatus.APPROVED);
+
+        assertThat(approvedList).hasSize(1);
+        assertThat(approvedList.get(0).getTitre()).isEqualTo("Approved property");
+    }
 }

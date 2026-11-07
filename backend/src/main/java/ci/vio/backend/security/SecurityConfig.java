@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/properties/public").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

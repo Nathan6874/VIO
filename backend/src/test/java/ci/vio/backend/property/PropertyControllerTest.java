@@ -97,4 +97,27 @@ class PropertyControllerTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
     }
+
+    @Test
+    void getPublicPropertiesShouldReturn200WithoutAuth() throws Exception {
+        PropertyResponse approved = new PropertyResponse(
+                10L,
+                "Appartement Cocody",
+                "Chez Koffi",
+                "Abidjan",
+                "Cocody",
+                250000.0,
+                PropertyStatus.APPROVED,
+                Instant.parse("2026-11-07T00:00:00Z"),
+                new PropertyResponse.OwnerInfo(6L, "Koffi", "Jean", "+22501020304")
+        );
+
+        when(propertyService.findAllApproved()).thenReturn(List.of(approved));
+
+        mockMvc.perform(get("/api/properties/public"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].status").value("APPROVED"));
+    }
 }

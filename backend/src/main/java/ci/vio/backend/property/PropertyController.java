@@ -31,6 +31,11 @@ public class PropertyController {
         return propertyService.findAllByOwner(owner);
     }
 
+    @GetMapping("/public")
+    public List<PropertyResponse> findAllPublic() {
+        return propertyService.findAllApproved();
+    }
+
     @PostMapping
     public ResponseEntity<PropertyResponse> create(@RequestBody CreatePropertyRequest request,
                                                    Authentication authentication) {
