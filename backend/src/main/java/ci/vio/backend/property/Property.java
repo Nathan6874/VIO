@@ -32,6 +32,13 @@ public class Property {
 
     private Double prix;
 
+    @Enumerated(EnumType.STRING)
+    private PropertyType type = PropertyType.AUTRE;
+
+    private Integer nombrePieces;
+
+    private Double surface;
+
     private Instant createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -90,6 +97,30 @@ public class Property {
 
     public void setPrix(Double prix) {
         this.prix = prix;
+    }
+
+    public PropertyType getType() {
+        return type;
+    }
+
+    public void setType(PropertyType type) {
+        this.type = type;
+    }
+
+    public Integer getNombrePieces() {
+        return nombrePieces;
+    }
+
+    public void setNombrePieces(Integer nombrePieces) {
+        this.nombrePieces = nombrePieces;
+    }
+
+    public Double getSurface() {
+        return surface;
+    }
+
+    public void setSurface(Double surface) {
+        this.surface = surface;
     }
 
     public Instant getCreatedAt() {

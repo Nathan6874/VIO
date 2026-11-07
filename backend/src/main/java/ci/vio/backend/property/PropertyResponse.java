@@ -9,6 +9,9 @@ public record PropertyResponse(
         String ville,
         String commune,
         Double prix,
+        PropertyType type,
+        Integer nombrePieces,
+        Double surface,
         PropertyStatus status,
         Instant createdAt,
         OwnerInfo owner
@@ -38,6 +41,9 @@ public record PropertyResponse(
                 property.getVille(),
                 property.getCommune(),
                 property.getPrix(),
+                property.getType(),
+                property.getNombrePieces(),
+                property.getSurface(),
                 property.getStatus(),
                 property.getCreatedAt(),
                 ownerInfo

@@ -3,6 +3,7 @@ package ci.vio.backend.admin;
 import ci.vio.backend.property.PropertyNotFoundException;
 import ci.vio.backend.property.PropertyResponse;
 import ci.vio.backend.property.PropertyStatus;
+import ci.vio.backend.property.PropertyType;
 import ci.vio.backend.security.JwtService;
 import ci.vio.backend.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class AdminControllerTest {
     @MockitoBean
     private UserDetailsService userDetailsService;
 
-    private PropertyResponse approvedResponse() {
+    private PropertyResponse sampleResponse(PropertyStatus status) {
         return new PropertyResponse(
                 10L,
                 "Appartement Cocody",
@@ -45,21 +46,10 @@ class AdminControllerTest {
                 "Abidjan",
                 "Cocody",
                 250000.0,
-                PropertyStatus.APPROVED,
-                Instant.parse("2026-11-07T00:00:00Z"),
-                new PropertyResponse.OwnerInfo(6L, "Koffi", "Jean", "+22501020304")
-        );
-    }
-
-    private PropertyResponse rejectedResponse() {
-        return new PropertyResponse(
-                10L,
-                "Appartement Cocody",
-                "Chez Koffi",
-                "Abidjan",
-                "Cocody",
-                250000.0,
-                PropertyStatus.REJECTED,
+                PropertyType.APPARTEMENT,
+                3,
+                75.0,
+                status,
                 Instant.parse("2026-11-07T00:00:00Z"),
                 new PropertyResponse.OwnerInfo(6L, "Koffi", "Jean", "+22501020304")
         );
@@ -68,18 +58,19 @@ class AdminControllerTest {
     @Test
     @WithMockUser(username = "+22501020304", roles = "ADMIN")
     void approveShouldReturn200WhenAdmin() throws Exception {
-        when(adminService.approve(10L)).thenReturn(approvedResponse());
+        when(adminService.approve(10L)).thenReturn(sampleResponse(PropertyStatus.APPROVED));
 
         mockMvc.perform(put("/api/admin/properties/10/approve"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(10))
-                .andExpect(jsonPath("$.status").value("APPROVED"));
+                .andExpect(jsonPath("$.status").value("APPROVED"))
+                .andExpect(jsonPath("$.type").value("APPARTEMENT"));
     }
 
     @Test
     @WithMockUser(username = "+22501020304", roles = "ADMIN")
     void rejectShouldReturn200WhenAdmin() throws Exception {
-        when(adminService.reject(10L)).thenReturn(rejectedResponse());
+        when(adminService.reject(10L)).thenReturn(sampleResponse(PropertyStatus.REJECTED));
 
         mockMvc.perform(put("/api/admin/properties/10/reject"))
                 .andExpect(status().isOk())

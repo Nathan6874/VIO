@@ -46,9 +46,24 @@ public class PropertyController {
                 request.description(),
                 request.ville(),
                 request.commune(),
-                request.prix()
+                request.prix(),
+                request.type(),
+                request.nombrePieces(),
+                request.surface()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    public record CreatePropertyRequest(
+            String titre,
+            String description,
+            String ville,
+            String commune,
+            Double prix,
+            PropertyType type,
+            Integer nombrePieces,
+            Double surface
+    ) {
     }
 
     private User getUserFromAuthentication(Authentication authentication) {
@@ -58,12 +73,4 @@ public class PropertyController {
                         "Utilisateur authentifié introuvable : " + whatsapp));
     }
 
-    public record CreatePropertyRequest(
-            String titre,
-            String description,
-            String ville,
-            String commune,
-            Double prix
-    ) {
-    }
 }

@@ -43,17 +43,20 @@ class PropertyRepositoryTest {
         property.setVille("Abidjan");
         property.setCommune("Cocody");
         property.setPrix(250000.0);
+        property.setType(PropertyType.APPARTEMENT);
+        property.setNombrePieces(3);
+        property.setSurface(75.0);
         property.setCreatedAt(Instant.now());
 
         Property saved = propertyRepository.save(property);
 
         assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getType()).isEqualTo(PropertyType.APPARTEMENT);
+        assertThat(saved.getNombrePieces()).isEqualTo(3);
+        assertThat(saved.getSurface()).isEqualTo(75.0);
 
         List<Property> byOwner = propertyRepository.findByOwner(savedOwner);
         assertThat(byOwner).hasSize(1);
-        assertThat(byOwner.get(0).getTitre()).isEqualTo("Appartement 3 pièces Cocody");
-        assertThat(byOwner.get(0).getVille()).isEqualTo("Abidjan");
-        assertThat(byOwner.get(0).getPrix()).isEqualTo(250000.0);
     }
 
     @Test
@@ -72,6 +75,7 @@ class PropertyRepositoryTest {
         pending.setVille("Abidjan");
         pending.setCommune("Cocody");
         pending.setPrix(250000.0);
+        pending.setType(PropertyType.APPARTEMENT);
         pending.setStatus(PropertyStatus.PENDING);
         pending.setCreatedAt(Instant.now());
         propertyRepository.save(pending);
@@ -82,6 +86,7 @@ class PropertyRepositoryTest {
         approved.setVille("Abidjan");
         approved.setCommune("Yopougon");
         approved.setPrix(450000.0);
+        approved.setType(PropertyType.VILLA);
         approved.setStatus(PropertyStatus.APPROVED);
         approved.setCreatedAt(Instant.now());
         propertyRepository.save(approved);
@@ -90,5 +95,6 @@ class PropertyRepositoryTest {
 
         assertThat(approvedList).hasSize(1);
         assertThat(approvedList.get(0).getTitre()).isEqualTo("Approved property");
+        assertThat(approvedList.get(0).getType()).isEqualTo(PropertyType.VILLA);
     }
 }

@@ -26,7 +26,8 @@ public class PropertyService {
 
     @Transactional
     public PropertyResponse create(User owner, String titre, String description,
-                                   String ville, String commune, Double prix) {
+                                   String ville, String commune, Double prix,
+                                   PropertyType type, Integer nombrePieces, Double surface) {
         Property property = new Property();
         property.setOwner(owner);
         property.setTitre(titre);
@@ -34,6 +35,9 @@ public class PropertyService {
         property.setVille(ville);
         property.setCommune(commune);
         property.setPrix(prix);
+        property.setType(type);
+        property.setNombrePieces(nombrePieces);
+        property.setSurface(surface);
         property.setCreatedAt(Instant.now());
         Property saved = propertyRepository.save(property);
         return PropertyResponse.from(saved);

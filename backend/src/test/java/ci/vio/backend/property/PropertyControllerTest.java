@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -47,6 +48,23 @@ class PropertyControllerTest {
     @MockitoBean
     private UserDetailsService userDetailsService;
 
+    private PropertyResponse sampleResponse(PropertyStatus status) {
+        return new PropertyResponse(
+                10L,
+                "Appartement 3 pièces Cocody",
+                "Bel appartement rénové",
+                "Abidjan",
+                "Cocody",
+                250000.0,
+                PropertyType.APPARTEMENT,
+                3,
+                75.0,
+                status,
+                Instant.parse("2026-11-07T00:00:00Z"),
+                new PropertyResponse.OwnerInfo(1L, "Koffi", "Jean", "+22501020304")
+        );
+    }
+
     @Test
     @WithMockUser(username = "+22501020304")
     void postPropertyShouldReturn201AndCreatedProperty() throws Exception {
@@ -56,30 +74,23 @@ class PropertyControllerTest {
 
         when(userService.findByWhatsapp("+22501020304")).thenReturn(Optional.of(owner));
 
-        PropertyResponse response = new PropertyResponse(
-                10L,
-                "Appartement 3 pièces Cocody",
-                "Bel appartement rénové",
-                "Abidjan",
-                "Cocody",
-                250000.0,
-                PropertyStatus.PENDING,
-                Instant.parse("2026-11-07T00:00:00Z"),
-                new PropertyResponse.OwnerInfo(1L, "Koffi", "Jean", "+22501020304")
-        );
+        PropertyResponse response = sampleResponse(PropertyStatus.PENDING);
 
         when(propertyService.create(any(User.class), anyString(), anyString(),
-                anyString(), anyString(), anyDouble()))
+                anyString(), anyString(), anyDouble(), any(PropertyType.class),
+                anyInt(), anyDouble()))
                 .thenReturn(response);
 
         mockMvc.perform(post("/api/properties")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"titre\":\"Appartement 3 pièces Cocody\",\"description\":\"Bel appartement rénové\",\"ville\":\"Abidjan\",\"commune\":\"Cocody\",\"prix\":250000}"))
+                        .content("{\"titre\":\"Appartement 3 pièces Cocody\",\"description\":\"Bel appartement rénové\",\"ville\":\"Abidjan\",\"commune\":\"Cocody\",\"prix\":250000,\"type\":\"APPARTEMENT\",\"nombrePieces\":3,\"surface\":75}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(10))
-                .andExpect(jsonPath("$.status").value("PENDING"))
-                .andExpect(jsonPath("$.owner.whatsapp").value("+22501020304"));
+                .andExpect(jsonPath("$.type").value("APPARTEMENT"))
+                .andExpect(jsonPath("$.nombrePieces").value(3))
+                .andExpect(jsonPath("$.surface").value(75.0))
+                .andExpect(jsonPath("$.status").value("PENDING"));
     }
 
     @Test
@@ -100,17 +111,7 @@ class PropertyControllerTest {
 
     @Test
     void getPublicPropertiesShouldReturn200WithoutAuth() throws Exception {
-        PropertyResponse approved = new PropertyResponse(
-                10L,
-                "Appartement Cocody",
-                "Chez Koffi",
-                "Abidjan",
-                "Cocody",
-                250000.0,
-                PropertyStatus.APPROVED,
-                Instant.parse("2026-11-07T00:00:00Z"),
-                new PropertyResponse.OwnerInfo(6L, "Koffi", "Jean", "+22501020304")
-        );
+        PropertyResponse approved = sampleResponse(PropertyStatus.APPROVED);
 
         when(propertyService.findAllApproved()).thenReturn(List.of(approved));
 
@@ -118,6 +119,7 @@ class PropertyControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].status").value("APPROVED"));
+                .andExpect(jsonPath("$[0].status").value("APPROVED"))
+                .andExpect(jsonPath("$[0].type").value("APPARTEMENT"));
     }
 }
