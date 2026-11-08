@@ -3,13 +3,21 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Property } from '../models/property.model';
 import { PropertyService } from '../services/property.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-property-list',
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <h1>Annonces VIO</h1>
+    <div class="header">
+      <h1>Annonces VIO</h1>
+      @if (authService.isAuthenticated()) {
+        <button (click)="authService.logout()">Déconnexion</button>
+      } @else {
+        <a routerLink="/login" class="login-link">Connexion</a>
+      }
+    </div>
 
     @if (loading()) {
       <p>Chargement…</p>
@@ -35,6 +43,8 @@ import { PropertyService } from '../services/property.service';
     }
   `,
   styles: [`
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; }
+    .login-link { color: #007bff; text-decoration: none; font-weight: bold; }
     h1 { padding: 1rem 2rem; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; padding: 1rem 2rem; }
     .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; }
@@ -55,7 +65,7 @@ export class PropertyListComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
-  constructor(private propertyService: PropertyService) {
+  constructor(private propertyService: PropertyService, public authService: AuthService) {
   }
 
   ngOnInit(): void {
