@@ -44,13 +44,14 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.whatsapp(),
-                        request.password()
-                )
+                new UsernamePasswordAuthenticationToken(request.whatsapp(), request.password())
         );
 
-        String token = jwtService.generateToken(authentication.getName());
+        // Récupérer le rôle depuis l'utilisateur
+        User user = userService.findByWhatsapp(authentication.getName())
+                .orElseThrow(() -> new IllegalStateException("Utilisateur introuvable"));
+        String token = jwtService.generateToken(authentication.getName(), user.getRole().name());
+
         return ResponseEntity.ok(new LoginResponse(token));
     }
 

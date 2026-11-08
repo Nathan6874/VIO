@@ -8,6 +8,8 @@ import ci.vio.backend.property.PropertyStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class AdminService {
 
@@ -33,5 +35,13 @@ public class AdminService {
         property.setStatus(PropertyStatus.REJECTED);
         Property saved = propertyRepository.save(property);
         return PropertyResponse.from(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PropertyResponse> findPendingProperties() {
+        return propertyRepository.findByStatus(PropertyStatus.PENDING)
+                .stream()
+                .map(PropertyResponse::from)
+                .toList();
     }
 }

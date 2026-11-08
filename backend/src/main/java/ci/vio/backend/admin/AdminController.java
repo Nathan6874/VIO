@@ -4,12 +4,9 @@ import ci.vio.backend.property.PropertyNotFoundException;
 import ci.vio.backend.property.PropertyResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -38,5 +35,11 @@ public class AdminController {
     public ResponseEntity<Map<String, String>> handlePropertyNotFound(PropertyNotFoundException ex) {
         return ResponseEntity.status(404)
                 .body(Map.of("error", "PropertyNotFound", "message", ex.getMessage()));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<PropertyResponse>> getPending() {
+        return ResponseEntity.ok(adminService.findPendingProperties());
     }
 }
