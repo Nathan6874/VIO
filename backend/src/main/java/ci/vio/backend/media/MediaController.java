@@ -6,14 +6,10 @@ import ci.vio.backend.user.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +43,17 @@ public class MediaController {
                 request.url(),
                 request.type()
         );
+        return ResponseEntity.status(HttpStatus.CREATED).body(media);
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<MediaResponse> upload(
+            @PathVariable Long propertyId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("type") String type,
+            Authentication authentication) throws IOException {
+        User currentUser = getUserFromAuthentication(authentication);
+        MediaResponse media = mediaService.uploadMedia(propertyId, currentUser, file, type);
         return ResponseEntity.status(HttpStatus.CREATED).body(media);
     }
 
