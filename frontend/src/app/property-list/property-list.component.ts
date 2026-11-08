@@ -14,10 +14,13 @@ import { AuthService } from '../services/auth.service';
       <h1>Annonces VIO</h1>
       @if (authService.isAuthenticated()) {
         <div class="actions">
+          @if (authService.getRole() === 'ADMIN') {
+            <a routerLink="/admin/dashboard" class="btn-link">Admin</a>
+          }
           <a routerLink="/owner/dashboard" class="btn-link">Mes annonces</a>
           <button (click)="authService.logout()">Déconnexion</button>
         </div>
-      } @else {
+    } @else {
         <a routerLink="/login" class="login-link">Connexion</a>
       }
     </div>
