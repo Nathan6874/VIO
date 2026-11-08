@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Property } from '../models/property.model';
+import { CreatePropertyRequest, Property } from '../models/property.model';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -23,6 +23,10 @@ export class PropertyService {
   }
 
   getMyProperties(): Observable<Property[]> {
-  return this.http.get<Property[]>(this.apiUrl);
-}
+    return this.http.get<Property[]>(this.apiUrl);
+  }
+
+  createProperty(data: CreatePropertyRequest): Observable<Property> {
+    return this.http.post<Property>(this.apiUrl, data);
+  }
 }

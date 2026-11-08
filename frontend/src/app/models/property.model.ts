@@ -19,3 +19,14 @@ export interface Property {
   createdAt: string;
   owner: PropertyOwner;
 }
+
+export interface CreatePropertyRequest {
+  titre: string;
+  description: string;
+  ville: string;
+  commune: string;
+  prix: number;
+  type: string;
+  nombrePieces: number | null;
+  surface: number | null;
+}
