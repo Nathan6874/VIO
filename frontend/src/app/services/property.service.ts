@@ -21,4 +21,8 @@ export class PropertyService {
   getPublicProperty(id: number): Observable<Property> {
     return this.http.get<Property>(`${this.apiUrl}/public/${id}`);
   }
+
+  getMyProperties(): Observable<Property[]> {
+  return this.http.get<Property[]>(this.apiUrl);
+}
 }

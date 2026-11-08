@@ -13,7 +13,10 @@ import { AuthService } from '../services/auth.service';
     <div class="header">
       <h1>Annonces VIO</h1>
       @if (authService.isAuthenticated()) {
-        <button (click)="authService.logout()">Déconnexion</button>
+        <div class="actions">
+          <a routerLink="/owner/dashboard" class="btn-link">Mes annonces</a>
+          <button (click)="authService.logout()">Déconnexion</button>
+        </div>
       } @else {
         <a routerLink="/login" class="login-link">Connexion</a>
       }
@@ -45,6 +48,8 @@ import { AuthService } from '../services/auth.service';
   styles: [`
     .header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; }
     .login-link { color: #007bff; text-decoration: none; font-weight: bold; }
+    .actions { display: flex; gap: 1rem; align-items: center; }
+    .btn-link { color: #007bff; text-decoration: none; font-weight: bold; }
     h1 { padding: 1rem 2rem; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; padding: 1rem 2rem; }
     .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; }
