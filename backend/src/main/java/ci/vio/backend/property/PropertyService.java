@@ -50,4 +50,14 @@ public class PropertyService {
                 .map(PropertyResponse::from)
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public PropertyResponse findApprovedById(Long id) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new PropertyNotFoundException(id));
+        if (property.getStatus() != PropertyStatus.APPROVED) {
+            throw new PropertyNotFoundException(id);
+        }
+        return PropertyResponse.from(property);
+    }
 }
