@@ -1,0 +1,20 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { Property } from '../models/property.model';
+import { environment } from '../../environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class PropertyService {
+
+  private readonly apiUrl = `${environment.apiUrl}/api/properties`;
+
+  constructor(private http: HttpClient) {
+  }
+
+  getPublicProperties(): Observable<Property[]> {
+    return this.http.get<Property[]>(`${this.apiUrl}/public`);
+  }
+}
