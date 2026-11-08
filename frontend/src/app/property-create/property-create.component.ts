@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { PropertyService } from '../services/property.service';
 import { CreatePropertyRequest } from '../models/property.model';
+import { MediaUploadComponent } from '../media-upload/media-upload.component';
 
 @Component({
   selector: 'app-property-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MediaUploadComponent],
   template: `
     <a routerLink="/owner/dashboard" class="back">← Retour</a>
 
@@ -74,6 +75,11 @@ import { CreatePropertyRequest } from '../models/property.model';
           {{ loading() ? 'Création…' : "Créer l'annonce" }}
         </button>
       </form>
+
+      @if (createdPropertyId()) {
+        <app-media-upload [propertyId]="createdPropertyId()!" />
+        <a routerLink="/owner/dashboard" class="btn-dashboard">Terminer → Mes annonces</a>
+      }
     </div>
   `,
   styles: [`
@@ -90,6 +96,8 @@ import { CreatePropertyRequest } from '../models/property.model';
     button:hover:not(:disabled) { background: #0056b3; }
     button:disabled { background: #ccc; cursor: not-allowed; }
     .error { color: red; }
+    .btn-dashboard { display: inline-block; margin-top: 1rem; padding: 0.8rem 1.5rem; background: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+    .btn-dashboard:hover { background: #218838; }
   `]
 })
 export class PropertyCreateComponent {
@@ -107,6 +115,7 @@ export class PropertyCreateComponent {
 
   loading = signal(false);
   error = signal<string | null>(null);
+  createdPropertyId = signal<number | null>(null);
 
   constructor(
     private propertyService: PropertyService,
@@ -115,6 +124,14 @@ export class PropertyCreateComponent {
   }
 
   onSubmit(): void {
+
+    if (!this.form.titre.trim() || !this.form.description.trim() || 
+        !this.form.ville.trim() || !this.form.commune.trim() || 
+        this.form.prix <= 0) {
+        this.error.set('Tous les champs obligatoires doivent être remplis');
+        return;
+    }
+
     this.loading.set(true);
     this.error.set(null);
 
@@ -130,9 +147,9 @@ export class PropertyCreateComponent {
     };
 
     this.propertyService.createProperty(data).subscribe({
-      next: () => {
+      next: (property) => {
         this.loading.set(false);
-        this.router.navigate(['/owner/dashboard']);
+        this.createdPropertyId.set(property.id);
       },
       error: (err) => {
         this.loading.set(false);
