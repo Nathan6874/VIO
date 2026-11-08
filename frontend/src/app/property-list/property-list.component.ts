@@ -1,12 +1,13 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Property } from '../models/property.model';
 import { PropertyService } from '../services/property.service';
 
 @Component({
   selector: 'app-property-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <h1>Annonces VIO</h1>
 
@@ -19,14 +20,16 @@ import { PropertyService } from '../services/property.service';
     } @else {
       <div class="grid">
         @for (p of properties(); track p.id) {
-          <div class="card">
-            <h2>{{ p.titre }}</h2>
-            <p class="location">{{ p.commune }}, {{ p.ville }}</p>
-            <p class="type">{{ p.type }} — {{ p.nombrePieces ?? '?' }} pièces — {{ p.surface ?? '?' }} m²</p>
-            <p class="price">{{ p.prix }} FCFA</p>
-            <p class="description">{{ p.description }}</p>
-            <p class="owner">Propriétaire : {{ p.owner.prenom }} {{ p.owner.nom }}</p>
-          </div>
+          <a [routerLink]="['/properties', p.id]" class="card-link">
+            <div class="card">
+              <h2>{{ p.titre }}</h2>
+              <p class="location">{{ p.commune }}, {{ p.ville }}</p>
+              <p class="type">{{ p.type }} — {{ p.nombrePieces ?? '?' }} pièces — {{ p.surface ?? '?' }} m²</p>
+              <p class="price">{{ p.prix }} FCFA</p>
+              <p class="description">{{ p.description }}</p>
+              <p class="owner">Propriétaire : {{ p.owner.prenom }} {{ p.owner.nom }}</p>
+            </div>
+          </a>
         }
       </div>
     }
@@ -42,6 +45,8 @@ import { PropertyService } from '../services/property.service';
     .description { color: #444; }
     .owner { font-size: 0.85rem; color: #555; font-style: italic; }
     .error { color: red; padding: 1rem 2rem; }
+    .card-link { text-decoration: none; color: inherit; }
+    .card-link:hover .card { border-color: #007bff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
   `]
 })
 export class PropertyListComponent implements OnInit {
