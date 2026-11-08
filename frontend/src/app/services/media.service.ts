@@ -30,6 +30,6 @@ export class MediaService {
   }
 
   getMedia(propertyId: number): Observable<Media[]> {
-    return this.http.get<Media[]>(`${this.apiUrl}/${propertyId}/media`);
-  }
+    return this.http.get<Media[]>(`${this.apiUrl}/${propertyId}/media/public`);
+    }
 }

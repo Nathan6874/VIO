@@ -32,6 +32,11 @@ public class MediaController {
         return mediaService.findAllByPropertyId(propertyId, currentUser);
     }
 
+    @GetMapping("/public")
+    public List<MediaResponse> findAllPublic(@PathVariable Long propertyId) {
+        return mediaService.findAllByPropertyIdPublic(propertyId);
+    }
+
     @PostMapping
     public ResponseEntity<MediaResponse> create(@PathVariable Long propertyId,
                                                 @RequestBody CreateMediaRequest request,

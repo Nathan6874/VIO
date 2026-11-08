@@ -3,6 +3,7 @@ package ci.vio.backend.media;
 import ci.vio.backend.property.Property;
 import ci.vio.backend.property.PropertyNotFoundException;
 import ci.vio.backend.property.PropertyRepository;
+import ci.vio.backend.property.PropertyStatus;
 import ci.vio.backend.user.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -93,5 +94,19 @@ public class MediaService {
         }
 
         return property;
+    }
+
+    @Transactional(readOnly = true)
+    public List<MediaResponse> findAllByPropertyIdPublic(Long propertyId) {
+        // Vérifier que la propriété existe et est APPROVED
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
+        if (property.getStatus() != PropertyStatus.APPROVED) {
+            throw new PropertyNotFoundException(propertyId);
+        }
+        return mediaRepository.findByPropertyId(propertyId)
+                .stream()
+                .map(MediaResponse::from)
+                .toList();
     }
 }
