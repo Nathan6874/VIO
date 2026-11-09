@@ -4,17 +4,19 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Property } from '../models/property.model';
 import { PropertyService } from '../services/property.service';
 import { Media, MediaService } from '../services/media.service';
+import { AuthService } from '../services/auth.service';
+import { MediaUploadComponent } from '../media-upload/media-upload.component';
 import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.component';
 
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, PanoramaViewerComponent],
+  imports: [CommonModule, RouterLink, MediaUploadComponent, PanoramaViewerComponent],
   template: `
     <a routerLink="/" class="back">← Retour</a>
 
     @if (loading()) {
-      <p>Chargement…</p>
+      <p class="loading">Chargement…</p>
     } @else if (error()) {
       <p class="error">{{ error() }}</p>
     } @else if (property()) {
@@ -27,17 +29,25 @@ import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.comp
         <p class="description">{{ p.description }}</p>
         <p class="owner">Propriétaire : {{ p.owner.prenom }} {{ p.owner.nom }}</p>
 
+        @if (isOwner()) {
+          <button (click)="showUpload.set(!showUpload())" class="btn-upload">
+            {{ showUpload() ? "Masquer l'upload" : '+ Ajouter un média' }}
+          </button>
+        }
+
+        @if (showUpload() && isOwner()) {
+          <app-media-upload [propertyId]="p.id" (mediaUploaded)="onMediaUploaded($event)" />
+        }
+
         @if (mediaList().length > 0) {
-          <h2>Photos</h2>
+          <h2>Photos et visites</h2>
           <div class="gallery">
             @for (m of mediaList(); track m.id) {
               <div class="gallery-item">
                 @if (m.type === 'PHOTO') {
                   <img [src]="'http://localhost:8087' + m.url" alt="Photo du bien" />
                 } @else if (m.type === 'PANORAMA_360') {
-                  <div class="panorama-placeholder">
-                      <app-panorama-viewer [imageUrl]="'http://localhost:8087' + m.url" [title]="property()!.titre" />
-                  </div>
+                  <app-panorama-viewer [imageUrl]="'http://localhost:8087' + m.url" [title]="p.titre" />
                 }
               </div>
             }
@@ -57,9 +67,11 @@ import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.comp
     .price { font-size: 1.8rem; color: #e74c3c; font-weight: bold; }
     .description { color: #444; margin: 1rem 0; }
     .owner { color: #555; font-style: italic; }
+    .btn-upload { margin: 1rem 0; padding: 0.7rem 1.2rem; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn-upload:hover { background: #218838; }
     .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem; }
     .gallery-item img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
-    .panorama-placeholder { width: 100%; height: 200px; display: flex; align-items: center; justify-content: center; background: #f0f0f0; border-radius: 8px; color: #666; }
+    .loading, .empty { padding: 2rem; color: #666; }
     .error { color: red; padding: 1rem 2rem; }
   `]
 })
@@ -69,13 +81,14 @@ export class PropertyDetailComponent implements OnInit {
   mediaList = signal<Media[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
+  showUpload = signal(false);
 
   constructor(
     private route: ActivatedRoute,
     private propertyService: PropertyService,
-    private mediaService: MediaService
-  ) {
-  }
+    private mediaService: MediaService,
+    public authService: AuthService
+  ) {}
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -83,7 +96,6 @@ export class PropertyDetailComponent implements OnInit {
       next: (data) => {
         this.property.set(data);
         this.loading.set(false);
-        // Charger les médias
         this.mediaService.getMedia(id).subscribe({
           next: (media) => this.mediaList.set(media),
           error: (err) => console.error('Erreur chargement médias', err)
@@ -95,5 +107,16 @@ export class PropertyDetailComponent implements OnInit {
         console.error(err);
       }
     });
+  }
+
+  isOwner(): boolean {
+    const p = this.property();
+    if (!p || !this.authService.isAuthenticated()) return false;
+    const userWhatsapp = this.authService.getWhatsapp();
+    return p.owner.whatsapp === userWhatsapp;
+  }
+
+  onMediaUploaded(media: Media): void {
+    this.mediaList.update(list => [...list, media]);
   }
 }

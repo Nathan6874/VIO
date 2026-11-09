@@ -56,4 +56,15 @@ export class AuthService {
     return null;
   }
 }
+
+    getWhatsapp(): string | null {
+        const token = this.token();
+        if (!token) return null;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.sub || null;
+        } catch (e) {
+            return null;
+        }
+    }
 }

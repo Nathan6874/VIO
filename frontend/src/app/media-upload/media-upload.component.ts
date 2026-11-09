@@ -1,4 +1,4 @@
-import { Component, Input, signal } from '@angular/core';
+import { Component, Input, signal, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Media, MediaService } from '../services/media.service';
@@ -57,9 +57,10 @@ import { Media, MediaService } from '../services/media.service';
     .media-item img { max-width: 150px; border-radius: 4px; }
   `]
 })
-export class MediaUploadComponent {
+export class MediaUploadComponent implements OnInit {
 
   @Input() propertyId!: number;
+  @Output() mediaUploaded = new EventEmitter<Media>();
 
   type = 'PHOTO';
   uploading = signal(false);
@@ -87,11 +88,12 @@ export class MediaUploadComponent {
     this.mediaService.uploadMedia(this.propertyId, file, this.type).subscribe({
       next: (media) => {
         this.mediaList.update(list => [...list, media]);
+        this.mediaUploaded.emit(media);
         this.uploading.set(false);
-        input.value = ''; // reset input
+        input.value = '';
       },
       error: (err) => {
-        this.error.set('Erreur lors de l\'upload');
+        this.error.set("Erreur lors de l'upload");
         this.uploading.set(false);
         console.error(err);
       }
