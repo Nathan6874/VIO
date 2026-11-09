@@ -22,7 +22,11 @@
               }
             ],
             "styles": [
+              "node_modules/pannellum/build/pannellum.css",
               "src/styles.css"
+            ],
+            "scripts": [
+              "node_modules/pannellum/build/pannellum.js"
             ]
           },
           "configurations": {

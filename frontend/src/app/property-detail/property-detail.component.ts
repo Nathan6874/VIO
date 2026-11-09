@@ -4,11 +4,12 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Property } from '../models/property.model';
 import { PropertyService } from '../services/property.service';
 import { Media, MediaService } from '../services/media.service';
+import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.component';
 
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, PanoramaViewerComponent],
   template: `
     <a routerLink="/" class="back">← Retour</a>
 
@@ -35,7 +36,7 @@ import { Media, MediaService } from '../services/media.service';
                   <img [src]="'http://localhost:8087' + m.url" alt="Photo du bien" />
                 } @else if (m.type === 'PANORAMA_360') {
                   <div class="panorama-placeholder">
-                    🌐 Panorama 360° (à venir)
+                      <app-panorama-viewer [imageUrl]="'http://localhost:8087' + m.url" [title]="property()!.titre" />
                   </div>
                 }
               </div>
