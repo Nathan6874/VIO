@@ -9,45 +9,53 @@ import { AuthService } from '../services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="login-container">
-      <h1>Connexion VIO</h1>
+    <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div class="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+        <div class="text-center mb-8">
+          <h1 class="text-3xl font-bold text-gray-900">VIO</h1>
+          <p class="text-gray-500 mt-2">Connectez-vous à votre compte</p>
+        </div>
 
-      <form (ngSubmit)="onSubmit()">
-        <label>
-          WhatsApp
-          <input type="text" [(ngModel)]="whatsapp" name="whatsapp" required placeholder="+22501020304" />
-        </label>
+        <form (ngSubmit)="onSubmit()" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
+            <input
+              type="text"
+              [(ngModel)]="whatsapp"
+              name="whatsapp"
+              required
+              placeholder="+22501020304"
+              class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
 
-        <label>
-          Mot de passe
-          <input type="password" [(ngModel)]="password" name="password" required />
-        </label>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+            <input
+              type="password"
+              [(ngModel)]="password"
+              name="password"
+              required
+              class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
 
-        @if (error()) {
-          <p class="error">{{ error() }}</p>
-        }
+          @if (error()) {
+            <p class="text-red-600 text-sm">{{ error() }}</p>
+          }
 
-        <button type="submit" [disabled]="loading()">
-          {{ loading() ? 'Connexion…' : 'Se connecter' }}
-        </button>
-      </form>
+          <button
+            type="submit"
+            [disabled]="loading()"
+            class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 rounded-md transition">
+            {{ loading() ? 'Connexion…' : 'Se connecter' }}
+          </button>
+        </form>
 
-      <p class="back-link"><a routerLink="/">← Retour aux annonces</a></p>
+        <p class="text-center text-sm text-gray-500 mt-6">
+          <a routerLink="/" class="text-blue-600 hover:text-blue-800">← Retour aux annonces</a>
+        </p>
+      </div>
     </div>
-  `,
-  styles: [`
-    .login-container { max-width: 400px; margin: 2rem auto; padding: 2rem; }
-    h1 { margin-bottom: 1.5rem; }
-    form { display: flex; flex-direction: column; gap: 1rem; }
-    label { display: flex; flex-direction: column; font-weight: bold; }
-    input { padding: 0.5rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 4px; }
-    button { padding: 0.7rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    button:hover:not(:disabled) { background: #0056b3; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    .error { color: red; }
-    .back-link { margin-top: 1rem; }
-    .back-link a { color: #007bff; text-decoration: none; }
-  `]
+  `
 })
 export class LoginComponent {
 
@@ -59,8 +67,7 @@ export class LoginComponent {
   constructor(
     private authService: AuthService,
     private router: Router
-  ) {
-  }
+  ) {}
 
   onSubmit(): void {
     this.loading.set(true);
@@ -69,7 +76,6 @@ export class LoginComponent {
     this.authService.login(this.whatsapp, this.password).subscribe({
       next: () => {
         this.loading.set(false);
-        // Rediriger vers la page d'accueil (ou dashboard plus tard)
         this.router.navigate(['/']);
       },
       error: (err) => {

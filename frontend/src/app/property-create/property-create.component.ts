@@ -11,94 +11,101 @@ import { MediaUploadComponent } from '../media-upload/media-upload.component';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, MediaUploadComponent],
   template: `
-    <a routerLink="/owner/dashboard" class="back">← Retour</a>
+    <div class="min-h-screen bg-gray-50">
+      <!-- Header -->
+      <header class="bg-white shadow-sm">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <a routerLink="/owner/dashboard" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+            ← Retour à mes annonces
+          </a>
+          <h1 class="text-2xl font-bold text-gray-900 mt-2">Nouvelle annonce</h1>
+        </div>
+      </header>
 
-    <div class="container">
-      <h1>Nouvelle annonce</h1>
+      <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <form (ngSubmit)="onSubmit()" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Titre *</label>
+              <input type="text" [(ngModel)]="form.titre" name="titre" required
+                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
 
-      <form (ngSubmit)="onSubmit()">
-        <label>
-          Titre *
-          <input type="text" [(ngModel)]="form.titre" name="titre" required />
-        </label>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+              <textarea [(ngModel)]="form.description" name="description" rows="3" required
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
 
-        <label>
-          Description *
-          <textarea [(ngModel)]="form.description" name="description" rows="3" required></textarea>
-        </label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Ville *</label>
+                <input type="text" [(ngModel)]="form.ville" name="ville" required
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Commune *</label>
+                <input type="text" [(ngModel)]="form.commune" name="commune" required
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
 
-        <div class="row">
-          <label>
-            Ville *
-            <input type="text" [(ngModel)]="form.ville" name="ville" required />
-          </label>
-          <label>
-            Commune *
-            <input type="text" [(ngModel)]="form.commune" name="commune" required />
-          </label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Prix (FCFA) *</label>
+                <input type="number" [(ngModel)]="form.prix" name="prix" required min="0"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                <select [(ngModel)]="form.type" name="type" required
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="APPARTEMENT">Appartement</option>
+                  <option value="VILLA">Villa</option>
+                  <option value="STUDIO">Studio</option>
+                  <option value="TERRAIN">Terrain</option>
+                  <option value="BUREAU">Bureau</option>
+                  <option value="AUTRE">Autre</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de pièces</label>
+                <input type="number" [(ngModel)]="form.nombrePieces" name="nombrePieces" min="0"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Surface (m²)</label>
+                <input type="number" [(ngModel)]="form.surface" name="surface" min="0" step="0.1"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
+
+            @if (error()) {
+              <p class="text-red-600 text-sm">{{ error() }}</p>
+            }
+
+            <button type="submit" [disabled]="loading()"
+                    class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 rounded-md transition">
+              {{ loading() ? 'Création…' : "Créer l'annonce" }}
+            </button>
+          </form>
         </div>
 
-        <div class="row">
-          <label>
-            Prix (FCFA) *
-            <input type="number" [(ngModel)]="form.prix" name="prix" required min="0" />
-          </label>
-          <label>
-            Type *
-            <select [(ngModel)]="form.type" name="type" required>
-              <option value="APPARTEMENT">Appartement</option>
-              <option value="VILLA">Villa</option>
-              <option value="STUDIO">Studio</option>
-              <option value="TERRAIN">Terrain</option>
-              <option value="BUREAU">Bureau</option>
-              <option value="AUTRE">Autre</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="row">
-          <label>
-            Nombre de pièces
-            <input type="number" [(ngModel)]="form.nombrePieces" name="nombrePieces" min="0" />
-          </label>
-          <label>
-            Surface (m²)
-            <input type="number" [(ngModel)]="form.surface" name="surface" min="0" step="0.1" />
-          </label>
-        </div>
-
-        @if (error()) {
-          <p class="error">{{ error() }}</p>
+        @if (createdPropertyId()) {
+          <div class="mt-6">
+            <app-media-upload [propertyId]="createdPropertyId()!" />
+            <a routerLink="/owner/dashboard"
+               class="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-md transition mt-4">
+              Terminer → Mes annonces
+            </a>
+          </div>
         }
-
-        <button type="submit" [disabled]="loading()">
-          {{ loading() ? 'Création…' : "Créer l'annonce" }}
-        </button>
-      </form>
-
-      @if (createdPropertyId()) {
-        <app-media-upload [propertyId]="createdPropertyId()!" />
-        <a routerLink="/owner/dashboard" class="btn-dashboard">Terminer → Mes annonces</a>
-      }
+      </main>
     </div>
-  `,
-  styles: [`
-    .back { display: inline-block; padding: 1rem 2rem; color: #007bff; text-decoration: none; }
-    .back:hover { text-decoration: underline; }
-    .container { max-width: 700px; margin: 1rem auto; padding: 0 2rem; }
-    h1 { margin-bottom: 1.5rem; }
-    form { display: flex; flex-direction: column; gap: 1rem; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    label { display: flex; flex-direction: column; font-weight: bold; font-size: 0.9rem; }
-    input, textarea, select { padding: 0.5rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
-    textarea { resize: vertical; }
-    button { padding: 0.8rem; background: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
-    button:hover:not(:disabled) { background: #0056b3; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    .error { color: red; }
-    .btn-dashboard { display: inline-block; margin-top: 1rem; padding: 0.8rem 1.5rem; background: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-    .btn-dashboard:hover { background: #218838; }
-  `]
+  `
 })
 export class PropertyCreateComponent {
 
@@ -120,16 +127,14 @@ export class PropertyCreateComponent {
   constructor(
     private propertyService: PropertyService,
     private router: Router
-  ) {
-  }
+  ) {}
 
   onSubmit(): void {
-
-    if (!this.form.titre.trim() || !this.form.description.trim() || 
-        !this.form.ville.trim() || !this.form.commune.trim() || 
+    if (!this.form.titre.trim() || !this.form.description.trim() ||
+        !this.form.ville.trim() || !this.form.commune.trim() ||
         this.form.prix <= 0) {
-        this.error.set('Tous les champs obligatoires doivent être remplis');
-        return;
+      this.error.set('Tous les champs obligatoires doivent être remplis');
+      return;
     }
 
     this.loading.set(true);

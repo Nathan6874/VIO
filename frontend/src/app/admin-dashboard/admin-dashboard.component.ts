@@ -8,56 +8,55 @@ import { AdminService } from '../services/admin.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="header">
-      <h1>Administration — Annonces en attente</h1>
-    </div>
+    <div class="min-h-screen bg-gray-50">
+      <!-- Header -->
+      <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <h1 class="text-2xl font-bold text-gray-900">Administration — Annonces en attente</h1>
+        </div>
+      </header>
 
-    @if (loading()) {
-      <p>Chargement…</p>
-    } @else if (error()) {
-      <p class="error">{{ error() }}</p>
-    } @else if (pending().length === 0) {
-      <p class="empty">Aucune annonce en attente.</p>
-    } @else {
-      <div class="grid">
-        @for (p of pending(); track p.id) {
-          <div class="card">
-            <h2>{{ p.titre }}</h2>
-            <p class="location">{{ p.commune }}, {{ p.ville }}</p>
-            <p class="type">{{ p.type }} — {{ p.nombrePieces ?? '?' }} pièces — {{ p.surface ?? '?' }} m²</p>
-            <p class="price">{{ p.prix }} FCFA</p>
-            <p class="description">{{ p.description }}</p>
-            <p class="owner">Propriétaire : {{ p.owner.prenom }} {{ p.owner.nom }}</p>
+      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        @if (loading()) {
+          <p class="text-center text-gray-500 py-12">Chargement…</p>
+        } @else if (error()) {
+          <p class="text-center text-red-600 py-12">{{ error() }}</p>
+        } @else if (pending().length === 0) {
+          <div class="text-center py-12">
+            <p class="text-gray-500">Aucune annonce en attente.</p>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            @for (p of pending(); track p.id) {
+              <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-5">
+                  <h2 class="text-lg font-bold text-gray-900 mb-2">{{ p.titre }}</h2>
+                  <p class="text-sm font-semibold text-gray-600 mb-2">{{ p.commune }}, {{ p.ville }}</p>
+                  <p class="text-xs text-gray-500 mb-3">{{ p.type }} — {{ p.nombrePieces ?? '?' }} pièces — {{ p.surface ?? '?' }} m²</p>
+                  <p class="text-xl font-bold text-red-600 mb-3">{{ p.prix }} FCFA</p>
+                  <p class="text-sm text-gray-700 mb-3 line-clamp-2">{{ p.description }}</p>
+                  <p class="text-xs text-gray-500 italic mb-4">Propriétaire : {{ p.owner.prenom }} {{ p.owner.nom }}</p>
 
-            <div class="actions">
-              <button class="btn-approve" (click)="onApprove(p.id)">✓ Approuver</button>
-              <button class="btn-reject" (click)="onReject(p.id)">✗ Rejeter</button>
-            </div>
+                  <div class="flex gap-2">
+                    <button
+                      (click)="onApprove(p.id)"
+                      class="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-md transition">
+                      ✓ Approuver
+                    </button>
+                    <button
+                      (click)="onReject(p.id)"
+                      class="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 rounded-md transition">
+                      ✗ Rejeter
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
           </div>
         }
-      </div>
-    }
-  `,
-  styles: [`
-    .header { padding: 1rem 2rem; }
-    .header h1 { margin: 0; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; padding: 1rem 2rem; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; }
-    .card h2 { margin: 0 0 0.5rem 0; font-size: 1.1rem; }
-    .location { color: #666; font-weight: bold; margin: 0.3rem 0; }
-    .type { color: #888; font-size: 0.9rem; margin: 0.3rem 0; }
-    .price { font-size: 1.2rem; color: #e74c3c; font-weight: bold; margin: 0.5rem 0; }
-    .description { color: #444; font-size: 0.9rem; }
-    .owner { color: #555; font-style: italic; font-size: 0.85rem; }
-    .actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
-    .actions button { flex: 1; padding: 0.5rem; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
-    .btn-approve { background: #28a745; color: white; }
-    .btn-approve:hover { background: #218838; }
-    .btn-reject { background: #dc3545; color: white; }
-    .btn-reject:hover { background: #c82333; }
-    .empty { padding: 2rem; color: #666; }
-    .error { color: red; padding: 1rem 2rem; }
-  `]
+      </main>
+    </div>
+  `
 })
 export class AdminDashboardComponent implements OnInit {
 
@@ -65,8 +64,7 @@ export class AdminDashboardComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
-  constructor(private adminService: AdminService) {
-  }
+  constructor(private adminService: AdminService) {}
 
   ngOnInit(): void {
     this.loadPending();
