@@ -13,67 +13,105 @@ import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.comp
   standalone: true,
   imports: [CommonModule, RouterLink, MediaUploadComponent, PanoramaViewerComponent],
   template: `
-    <a routerLink="/" class="back">← Retour</a>
+    <!-- Panorama plein écran (si dispo) -->
+    @if (panoramaMedia()) {
+      <div class="relative w-full h-screen bg-black">
+        <app-panorama-viewer
+          [imageUrl]="'http://localhost:8087' + panoramaMedia()!.url"
+          [title]="property()?.titre || ''" />
 
-    @if (loading()) {
-      <p class="loading">Chargement…</p>
-    } @else if (error()) {
-      <p class="error">{{ error() }}</p>
-    } @else if (property()) {
-      @let p = property()!;
-      <div class="detail">
-        <h1>{{ p.titre }}</h1>
-        <p class="location">{{ p.commune }}, {{ p.ville }}</p>
-        <p class="type">{{ p.type }} — {{ p.nombrePieces ?? '?' }} pièces — {{ p.surface ?? '?' }} m²</p>
-        <p class="price">{{ p.prix }} FCFA</p>
-        <p class="description">{{ p.description }}</p>
-        <p class="owner">Propriétaire : {{ p.owner.prenom }} {{ p.owner.nom }}</p>
+        <!-- Bouton retour flottant -->
+        <a routerLink="/" class="absolute top-4 left-4 bg-black/60 hover:bg-black/80 text-white px-4 py-2 rounded-md backdrop-blur-sm transition">
+          ← Retour
+        </a>
 
-        @if (isOwner()) {
-          <button (click)="showUpload.set(!showUpload())" class="btn-upload">
-            {{ showUpload() ? "Masquer l'upload" : '+ Ajouter un média' }}
-          </button>
-        }
-
-        @if (showUpload() && isOwner()) {
-          <app-media-upload [propertyId]="p.id" (mediaUploaded)="onMediaUploaded($event)" />
-        }
-
-        @if (mediaList().length > 0) {
-          <h2>Photos et visites</h2>
-          <div class="gallery">
-            @for (m of mediaList(); track m.id) {
-              <div class="gallery-item">
-                @if (m.type === 'PHOTO') {
-                  <img [src]="'http://localhost:8087' + m.url" alt="Photo du bien" />
-                } @else if (m.type === 'PANORAMA_360') {
-                  <app-panorama-viewer [imageUrl]="'http://localhost:8087' + m.url" [title]="p.titre" />
-                }
-              </div>
-            }
-          </div>
-        }
+        <!-- Titre en bas (discret) -->
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-8">
+          <h1 class="text-3xl md:text-5xl font-bold text-white">{{ property()?.titre }}</h1>
+          <p class="text-xl text-white/80">{{ property()?.commune }}, {{ property()?.ville }}</p>
+          <p class="text-2xl font-bold text-red-400 mt-2">{{ property()?.prix }} FCFA</p>
+        </div>
       </div>
     }
-  `,
-  styles: [`
-    .back { display: inline-block; padding: 1rem 2rem; color: #007bff; text-decoration: none; }
-    .back:hover { text-decoration: underline; }
-    .detail { padding: 1rem 2rem; max-width: 900px; }
-    .detail h1 { margin: 0 0 0.5rem 0; }
-    .detail h2 { margin-top: 2rem; }
-    .location { color: #666; font-weight: bold; }
-    .type { color: #888; }
-    .price { font-size: 1.8rem; color: #e74c3c; font-weight: bold; }
-    .description { color: #444; margin: 1rem 0; }
-    .owner { color: #555; font-style: italic; }
-    .btn-upload { margin: 1rem 0; padding: 0.7rem 1.2rem; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .btn-upload:hover { background: #218838; }
-    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem; }
-    .gallery-item img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
-    .loading, .empty { padding: 2rem; color: #666; }
-    .error { color: red; padding: 1rem 2rem; }
-  `]
+
+    <!-- Contenu (scrollable sous le panorama) -->
+    <div class="min-h-screen bg-gray-50">
+      @if (loading()) {
+        <div class="max-w-7xl mx-auto px-4 py-12 text-center text-gray-500">Chargement…</div>
+      } @else if (error()) {
+        <div class="max-w-7xl mx-auto px-4 py-12 text-center text-red-600">{{ error() }}</div>
+      } @else if (property()) {
+        @let p = property()!;
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <!-- Si pas de panorama, afficher le titre ici -->
+          @if (!panoramaMedia()) {
+            <div class="mb-8">
+              <h1 class="text-4xl font-bold text-gray-900">{{ p.titre }}</h1>
+              <p class="text-lg text-gray-600">{{ p.commune }}, {{ p.ville }}</p>
+            </div>
+          }
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+              <!-- Photos -->
+              @if (photoMedia().length > 0) {
+                <div>
+                  <h2 class="text-2xl font-bold text-gray-900 mb-4">Photos</h2>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @for (m of photoMedia(); track m.id) {
+                      <img [src]="'http://localhost:8087' + m.url"
+                           alt="Photo du bien"
+                           class="w-full h-72 object-cover rounded-lg shadow-sm hover:shadow-md transition" />
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Description -->
+              <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Description</h2>
+                <p class="text-gray-700 leading-relaxed">{{ p.description }}</p>
+              </div>
+
+              <!-- Upload -->
+              @if (isOwner()) {
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                  <button (click)="showUpload.set(!showUpload())"
+                          class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-md transition">
+                    {{ showUpload() ? "Masquer l'upload" : '+ Ajouter un média' }}
+                  </button>
+                  @if (showUpload()) {
+                    <div class="mt-4">
+                      <app-media-upload [propertyId]="p.id" (mediaUploaded)="onMediaUploaded($event)" />
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+              <div class="bg-white rounded-lg shadow-sm p-6 sticky top-4">
+                <p class="text-3xl font-bold text-red-600 mb-2">{{ p.prix }} FCFA</p>
+                <p class="text-sm text-gray-500 mb-4">{{ p.type }} — {{ p.nombrePieces ?? '?' }} pièces — {{ p.surface ?? '?' }} m²</p>
+                <hr class="my-4" />
+                <h3 class="text-sm font-semibold text-gray-600 mb-2">Propriétaire</h3>
+                <p class="text-gray-900 font-medium">{{ p.owner.prenom }} {{ p.owner.nom }}</p>
+                <p class="text-sm text-gray-500">{{ p.owner.whatsapp }}</p>
+                <hr class="my-4" />
+                <a [href]="'https://wa.me/' + p.owner.whatsapp.replace('+', '')"
+                   target="_blank"
+                   class="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-md transition">
+                  Contacter via WhatsApp
+                </a>
+              </div>
+            </div>
+          </div>
+        </main>
+      }
+    </div>
+  `
 })
 export class PropertyDetailComponent implements OnInit {
 
@@ -82,6 +120,9 @@ export class PropertyDetailComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   showUpload = signal(false);
+
+  panoramaMedia = signal<Media | null>(null);
+  photoMedia = signal<Media[]>([]);
 
   constructor(
     private route: ActivatedRoute,
@@ -97,7 +138,11 @@ export class PropertyDetailComponent implements OnInit {
         this.property.set(data);
         this.loading.set(false);
         this.mediaService.getMedia(id).subscribe({
-          next: (media) => this.mediaList.set(media),
+          next: (media) => {
+            this.mediaList.set(media);
+            this.panoramaMedia.set(media.find(m => m.type === 'PANORAMA_360') || null);
+            this.photoMedia.set(media.filter(m => m.type === 'PHOTO'));
+          },
           error: (err) => console.error('Erreur chargement médias', err)
         });
       },
@@ -112,11 +157,15 @@ export class PropertyDetailComponent implements OnInit {
   isOwner(): boolean {
     const p = this.property();
     if (!p || !this.authService.isAuthenticated()) return false;
-    const userWhatsapp = this.authService.getWhatsapp();
-    return p.owner.whatsapp === userWhatsapp;
+    return p.owner.whatsapp === this.authService.getWhatsapp();
   }
 
   onMediaUploaded(media: Media): void {
     this.mediaList.update(list => [...list, media]);
+    if (media.type === 'PANORAMA_360') {
+      this.panoramaMedia.set(media);
+    } else {
+      this.photoMedia.update(list => [...list, media]);
+    }
   }
 }

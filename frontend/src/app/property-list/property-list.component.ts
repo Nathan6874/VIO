@@ -11,107 +11,103 @@ import { AuthService } from '../services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   template: `
-    <div class="header">
-      <h1>Annonces VIO</h1>
-      @if (authService.isAuthenticated()) {
-        <div class="actions">
-          @if (authService.getRole() === 'ADMIN') {
-            <a routerLink="/admin/dashboard" class="btn-link">Admin</a>
-          }
-          <a routerLink="/owner/dashboard" class="btn-link">Mes annonces</a>
-          <button (click)="authService.logout()">Déconnexion</button>
+    <div class="min-h-screen bg-gray-50">
+      <!-- Header -->
+      <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <h1 class="text-2xl font-bold text-gray-900">Annonces VIO</h1>
+          <nav class="flex items-center gap-4">
+            @if (authService.isAuthenticated()) {
+              @if (authService.getRole() === 'ADMIN') {
+                <a routerLink="/admin/dashboard" class="text-sm font-medium text-blue-600 hover:text-blue-800">Admin</a>
+              }
+              <a routerLink="/owner/dashboard" class="text-sm font-medium text-blue-600 hover:text-blue-800">Mes annonces</a>
+              <button (click)="authService.logout()" class="text-sm font-medium text-gray-600 hover:text-gray-900">Déconnexion</button>
+            } @else {
+              <a routerLink="/login" class="text-sm font-medium text-blue-600 hover:text-blue-800">Connexion</a>
+            }
+          </nav>
         </div>
-      } @else {
-        <a routerLink="/login" class="login-link">Connexion</a>
-      }
-    </div>
+      </header>
 
-    <!-- Filtres -->
-    <div class="filters">
-      <label>
-        Type
-        <select
-          [ngModel]="filterType()"
-          (ngModelChange)="filterType.set($event)">
-          <option value="">Tous</option>
-          <option value="APPARTEMENT">Appartement</option>
-          <option value="VILLA">Villa</option>
-          <option value="STUDIO">Studio</option>
-          <option value="TERRAIN">Terrain</option>
-          <option value="BUREAU">Bureau</option>
-          <option value="AUTRE">Autre</option>
-        </select>
-      </label>
+      <!-- Filtres -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="bg-white rounded-lg shadow-sm p-4 flex flex-wrap gap-4 items-end">
+          <div class="flex flex-col">
+            <label class="text-xs font-semibold text-gray-600 mb-1">Type</label>
+            <select
+              [ngModel]="filterType()"
+              (ngModelChange)="filterType.set($event)"
+              class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Tous</option>
+              <option value="APPARTEMENT">Appartement</option>
+              <option value="VILLA">Villa</option>
+              <option value="STUDIO">Studio</option>
+              <option value="TERRAIN">Terrain</option>
+              <option value="BUREAU">Bureau</option>
+              <option value="AUTRE">Autre</option>
+            </select>
+          </div>
 
-      <label>
-        Ville / Commune
-        <input
-          type="text"
-          [ngModel]="filterVille()"
-          (ngModelChange)="filterVille.set($event)"
-          placeholder="Ex: Abidjan" />
-      </label>
+          <div class="flex flex-col">
+            <label class="text-xs font-semibold text-gray-600 mb-1">Ville / Commune</label>
+            <input
+              type="text"
+              [ngModel]="filterVille()"
+              (ngModelChange)="filterVille.set($event)"
+              placeholder="Ex: Abidjan"
+              class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
 
-      <label>
-        Prix max (FCFA)
-        <input
-          type="number"
-          [ngModel]="filterPrixMax()"
-          (ngModelChange)="filterPrixMax.set($event ? +$event : null)"
-          placeholder="Ex: 200000"
-          min="0" />
-      </label>
+          <div class="flex flex-col">
+            <label class="text-xs font-semibold text-gray-600 mb-1">Prix max (FCFA)</label>
+            <input
+              type="number"
+              [ngModel]="filterPrixMax()"
+              (ngModelChange)="filterPrixMax.set($event ? +$event : null)"
+              placeholder="Ex: 200000"
+              min="0"
+              class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
 
-      <button (click)="resetFilters()" class="btn-reset">Réinitialiser</button>
-    </div>
-
-    @if (loading()) {
-      <p class="loading">Chargement…</p>
-    } @else if (error()) {
-      <p class="error">{{ error() }}</p>
-    } @else if (filteredProperties().length === 0) {
-      <p class="empty">Aucune annonce ne correspond à vos critères.</p>
-    } @else {
-      <div class="grid">
-        @for (p of filteredProperties(); track p.id) {
-          <a [routerLink]="['/properties', p.id]" class="card-link">
-            <div class="card">
-              <h2>{{ p.titre }}</h2>
-              <p class="location">{{ p.commune }}, {{ p.ville }}</p>
-              <p class="type">{{ p.type }} — {{ p.nombrePieces ?? '?' }} pièces — {{ p.surface ?? '?' }} m²</p>
-              <p class="price">{{ p.prix }} FCFA</p>
-              <p class="description">{{ p.description }}</p>
-              <p class="owner">Propriétaire : {{ p.owner.prenom }} {{ p.owner.nom }}</p>
-            </div>
-          </a>
-        }
+          <button
+            (click)="resetFilters()"
+            class="bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium px-4 py-2 rounded-md transition">
+            Réinitialiser
+          </button>
+        </div>
       </div>
-    }
-  `,
-  styles: [`
-    .header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; }
-    .header h1 { margin: 0; }
-    .actions { display: flex; gap: 1rem; align-items: center; }
-    .btn-link { color: #007bff; text-decoration: none; font-weight: bold; }
-    .login-link { color: #007bff; text-decoration: none; font-weight: bold; }
-    .filters { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem 2rem; background: #f8f9fa; border-bottom: 1px solid #eee; align-items: flex-end; }
-    .filters label { display: flex; flex-direction: column; font-size: 0.85rem; font-weight: bold; }
-    .filters input, .filters select { padding: 0.4rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 4px; }
-    .btn-reset { padding: 0.5rem 1rem; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .btn-reset:hover { background: #5a6268; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; padding: 1rem 2rem; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; }
-    .card h2 { margin: 0 0 0.5rem 0; font-size: 1.2rem; }
-    .location { color: #666; font-weight: bold; }
-    .type { color: #888; font-size: 0.9rem; }
-    .price { font-size: 1.3rem; color: #e74c3c; font-weight: bold; }
-    .description { color: #444; }
-    .owner { font-size: 0.85rem; color: #555; font-style: italic; }
-    .card-link { text-decoration: none; color: inherit; }
-    .card-link:hover .card { border-color: #007bff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .loading, .empty { padding: 2rem; color: #666; }
-    .error { color: red; padding: 1rem 2rem; }
-  `]
+
+      <!-- Liste des annonces -->
+      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        @if (loading()) {
+          <p class="text-center text-gray-500 py-12">Chargement…</p>
+        } @else if (error()) {
+          <p class="text-center text-red-600 py-12">{{ error() }}</p>
+        } @else if (filteredProperties().length === 0) {
+          <p class="text-center text-gray-500 py-12">Aucune annonce ne correspond à vos critères.</p>
+        } @else {
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            @for (p of filteredProperties(); track p.id) {
+              <a [routerLink]="['/properties', p.id]"
+                 class="block bg-white rounded-lg shadow-sm hover:shadow-md transition border border-gray-200 overflow-hidden">
+                <div class="p-5">
+                  <h2 class="text-lg font-bold text-gray-900 mb-2">{{ p.titre }}</h2>
+                  <p class="text-sm font-semibold text-gray-600 mb-2">{{ p.commune }}, {{ p.ville }}</p>
+                  <p class="text-xs text-gray-500 mb-3">
+                    {{ p.type }} — {{ p.nombrePieces ?? '?' }} pièces — {{ p.surface ?? '?' }} m²
+                  </p>
+                  <p class="text-xl font-bold text-red-600 mb-3">{{ p.prix }} FCFA</p>
+                  <p class="text-sm text-gray-700 mb-3 line-clamp-2">{{ p.description }}</p>
+                  <p class="text-xs text-gray-500 italic">Propriétaire : {{ p.owner.prenom }} {{ p.owner.nom }}</p>
+                </div>
+              </a>
+            }
+          </div>
+        }
+      </main>
+    </div>
+  `
 })
 export class PropertyListComponent implements OnInit {
 
@@ -119,21 +115,17 @@ export class PropertyListComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
-  // Filtres (signals)
   filterType = signal('');
   filterVille = signal('');
   filterPrixMax = signal<number | null>(null);
 
-  // Liste filtrée (computed)
   filteredProperties = computed(() => {
     let list = this.properties();
     const type = this.filterType();
     const ville = this.filterVille();
     const prixMax = this.filterPrixMax();
 
-    if (type) {
-      list = list.filter(p => p.type === type);
-    }
+    if (type) list = list.filter(p => p.type === type);
     if (ville) {
       const search = ville.toLowerCase();
       list = list.filter(p =>

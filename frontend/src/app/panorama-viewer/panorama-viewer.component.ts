@@ -14,12 +14,11 @@ declare var pannellum: any;
     :host {
       display: block;
       width: 100%;
+      height: 100%;
     }
     .panorama-container {
       width: 100%;
-      height: 400px;
-      border-radius: 8px;
-      overflow: hidden;
+      height: 100%;
       background: #000;
     }
   `]
@@ -34,7 +33,6 @@ export class PanoramaViewerComponent implements OnInit, OnDestroy {
   private viewer: any;
 
   ngOnInit(): void {
-    // Pannellum est chargé globalement via angular.json (scripts)
     if (typeof pannellum !== 'undefined') {
       this.initViewer();
     } else {
@@ -58,7 +56,7 @@ export class PanoramaViewerComponent implements OnInit, OnDestroy {
       showControls: true,
       showFullscreenCtrl: true,
       showZoomCtrl: true,
-      previewTitle: this.title,
+      previewTitle: this.title
     });
   }
 }
