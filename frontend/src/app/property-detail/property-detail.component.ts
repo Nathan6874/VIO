@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Property } from '../models/property.model';
@@ -7,26 +7,46 @@ import { Media, MediaService } from '../services/media.service';
 import { AuthService } from '../services/auth.service';
 import { MediaUploadComponent } from '../media-upload/media-upload.component';
 import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.component';
+import { SceneService } from '../services/scene.service';
+import { Hotspot, Scene } from '../models/scene.model';
 
 @Component({
   selector: 'app-property-detail',
   standalone: true,
   imports: [CommonModule, RouterLink, MediaUploadComponent, PanoramaViewerComponent],
   template: `
-    <!-- Panorama plein écran (si dispo) -->
-    @if (panoramaMedia()) {
+    <!-- Visite 3D multi-scènes (prioritaire si des scènes existent) -->
+    @if (scenes().length > 0) {
       <div class="relative w-full h-screen bg-black">
         <app-panorama-viewer
-          [imageUrl]="'http://localhost:8087' + panoramaMedia()!.url"
-          [title]="property()?.titre || ''" />
+          [scenes]="scenes()"
+          [hotspotsByScene]="hotspotsByScene()"
+          [backendBaseUrl]="'http://localhost:8087'" />
 
-        <!-- Bouton retour flottant -->
-        <a routerLink="/" class="absolute top-4 left-4 bg-black/60 hover:bg-black/80 text-white px-4 py-2 rounded-md backdrop-blur-sm transition">
+        <a routerLink="/" class="absolute top-4 left-4 bg-black/60 hover:bg-black/80 text-white px-4 py-2 rounded-md backdrop-blur-sm transition z-30">
           ← Retour
         </a>
 
-        <!-- Titre en bas (discret) -->
-        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-8">
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-8 pointer-events-none z-10">
+          <h1 class="text-3xl md:text-5xl font-bold text-white">{{ property()?.titre }}</h1>
+          <p class="text-xl text-white/80">{{ property()?.commune }}, {{ property()?.ville }}</p>
+          <p class="text-2xl font-bold text-red-400 mt-2">{{ property()?.prix }} FCFA</p>
+        </div>
+      </div>
+    }
+    <!-- Fallback : ancien mode mono-scène si pas encore de scènes 3D mais un panorama legacy -->
+    @else if (panoramaMedia()) {
+      <div class="relative w-full h-screen bg-black">
+        <app-panorama-viewer
+          [scenes]="[legacyScene()]"
+          [hotspotsByScene]="{}"
+          [backendBaseUrl]="'http://localhost:8087'" />
+
+        <a routerLink="/" class="absolute top-4 left-4 bg-black/60 hover:bg-black/80 text-white px-4 py-2 rounded-md backdrop-blur-sm transition z-30">
+          ← Retour
+        </a>
+
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-8 pointer-events-none z-10">
           <h1 class="text-3xl md:text-5xl font-bold text-white">{{ property()?.titre }}</h1>
           <p class="text-xl text-white/80">{{ property()?.commune }}, {{ property()?.ville }}</p>
           <p class="text-2xl font-bold text-red-400 mt-2">{{ property()?.prix }} FCFA</p>
@@ -34,7 +54,7 @@ import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.comp
       </div>
     }
 
-    <!-- Contenu (scrollable sous le panorama) -->
+    <!-- Contenu scrollable -->
     <div class="min-h-screen bg-gray-50">
       @if (loading()) {
         <div class="max-w-7xl mx-auto px-4 py-12 text-center text-gray-500">Chargement…</div>
@@ -44,8 +64,7 @@ import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.comp
         @let p = property()!;
 
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <!-- Si pas de panorama, afficher le titre ici -->
-          @if (!panoramaMedia()) {
+          @if (scenes().length === 0 && !panoramaMedia()) {
             <div class="mb-8">
               <h1 class="text-4xl font-bold text-gray-900">{{ p.titre }}</h1>
               <p class="text-lg text-gray-600">{{ p.commune }}, {{ p.ville }}</p>
@@ -54,6 +73,21 @@ import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.comp
 
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-8">
+
+              <!-- Info scènes 3D (owner uniquement) -->
+              @if (isOwner()) {
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p class="text-sm text-blue-800">
+                    <strong>Visite 3D :</strong>
+                    @if (scenes().length > 0) {
+                      {{ scenes().length }} scène(s) configurée(s) : {{ sceneLabels() }}
+                    } @else {
+                      Aucune scène 3D pour cette annonce.
+                    }
+                  </p>
+                </div>
+              }
+
               <!-- Photos -->
               @if (photoMedia().length > 0) {
                 <div>
@@ -74,7 +108,7 @@ import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.comp
                 <p class="text-gray-700 leading-relaxed">{{ p.description }}</p>
               </div>
 
-              <!-- Upload -->
+              <!-- Upload média legacy (photos) -->
               @if (isOwner()) {
                 <div class="bg-white rounded-lg shadow-sm p-6">
                   <button (click)="showUpload.set(!showUpload())"
@@ -124,19 +158,28 @@ export class PropertyDetailComponent implements OnInit {
   panoramaMedia = signal<Media | null>(null);
   photoMedia = signal<Media[]>([]);
 
-  constructor(
-    private route: ActivatedRoute,
-    private propertyService: PropertyService,
-    private mediaService: MediaService,
-    public authService: AuthService
-  ) {}
+  scenes = signal<Scene[]>([]);
+  hotspotsByScene = signal<{ [sceneId: number]: Hotspot[] }>({});
+
+  private route = inject(ActivatedRoute);
+  private propertyService = inject(PropertyService);
+  private mediaService = inject(MediaService);
+  private sceneService = inject(SceneService);
+  public authService = inject(AuthService);
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
+
+    // 1. Charger la propriété
     this.propertyService.getPublicProperty(id).subscribe({
       next: (data) => {
         this.property.set(data);
         this.loading.set(false);
+
+        // 2. Charger les scènes 3D (public)
+        this.loadScenes(id);
+
+        // 3. Charger les médias classiques (photos + panorama legacy)
         this.mediaService.getMedia(id).subscribe({
           next: (media) => {
             this.mediaList.set(media);
@@ -154,10 +197,109 @@ export class PropertyDetailComponent implements OnInit {
     });
   }
 
+  /**
+   * Le backend public renvoie [] si la propriété n'est pas APPROVED.
+   * Donc pour tester en tant qu'owner sur une annonce PENDING, on bascule
+   * sur l'endpoint owner (authentifié) si le public renvoie vide.
+   */
+  private loadScenes(propertyId: number): void {
+    this.sceneService.getScenesPublic(propertyId).subscribe({
+      next: (scenes) => {
+        if (scenes.length > 0) {
+          this.applyScenes(scenes);
+        } else if (this.isOwner()) {
+          // Fallback : charger via endpoint owner
+          this.sceneService.getScenes(propertyId).subscribe({
+            next: (ownerScenes) => this.applyScenes(ownerScenes),
+            error: (err) => console.error('Erreur scènes (owner)', err)
+          });
+        } else {
+          this.scenes.set([]);
+          this.hotspotsByScene.set({});
+        }
+      },
+      error: (err) => {
+        // Si 404 sur public (annonce pas APPROVED), tenter owner
+        if (this.isOwner()) {
+          this.sceneService.getScenes(propertyId).subscribe({
+            next: (ownerScenes) => this.applyScenes(ownerScenes),
+            error: (e) => console.error('Erreur scènes (owner fallback)', e)
+          });
+        } else {
+          console.error('Erreur chargement scènes', err);
+          this.scenes.set([]);
+        }
+      }
+    });
+  }
+
+  private applyScenes(scenes: Scene[]): void {
+    this.scenes.set(scenes);
+    if (scenes.length === 0) {
+      this.hotspotsByScene.set({});
+      return;
+    }
+
+    const map: { [sceneId: number]: Hotspot[] } = {};
+    let pending = scenes.length;
+
+    for (const scene of scenes) {
+      // Essayer public d'abord, fallback owner
+      this.sceneService.getHotspotsPublic(scene.id).subscribe({
+        next: (hotspots) => {
+          map[scene.id] = hotspots;
+          pending--;
+          if (pending === 0) this.hotspotsByScene.set(map);
+        },
+        error: () => {
+          if (this.isOwner()) {
+            this.sceneService.getHotspots(scene.id).subscribe({
+              next: (hotspots) => {
+                map[scene.id] = hotspots;
+                pending--;
+                if (pending === 0) this.hotspotsByScene.set(map);
+              },
+              error: () => {
+                map[scene.id] = [];
+                pending--;
+                if (pending === 0) this.hotspotsByScene.set(map);
+              }
+            });
+          } else {
+            map[scene.id] = [];
+            pending--;
+            if (pending === 0) this.hotspotsByScene.set(map);
+          }
+        }
+      });
+    }
+  }
+
   isOwner(): boolean {
     const p = this.property();
     if (!p || !this.authService.isAuthenticated()) return false;
     return p.owner.whatsapp === this.authService.getWhatsapp();
+  }
+
+  sceneLabels(): string {
+    return this.scenes().map(s => s.label).join(', ');
+  }
+
+  /** Convertit un ancien panoramaMedia en scène "legacy" pour le viewer multi-scènes. */
+  legacyScene(): Scene {
+    const p = this.property();
+    const m = this.panoramaMedia();
+    return {
+      id: -1,
+      propertyId: p?.id ?? 0,
+      label: p?.titre ?? 'Panorama',
+      panoramaUrl: m?.url ?? '',
+      sceneOrder: 0,
+      isMainScene: true,
+      defaultYaw: 0,
+      defaultPitch: 0,
+      createdAt: ''
+    };
   }
 
   onMediaUploaded(media: Media): void {
