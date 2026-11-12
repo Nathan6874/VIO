@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/properties/*/media/public").permitAll()
                         .requestMatchers("/api/properties/*/scenes/public").permitAll()
                         .requestMatchers("/api/scenes/*/hotspots/public").permitAll()
+                        .requestMatchers("/api/plans").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
