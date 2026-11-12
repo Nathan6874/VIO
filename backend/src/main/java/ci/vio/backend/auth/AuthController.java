@@ -41,6 +41,17 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user));
     }
 
+    @PostMapping("/register/client")
+    public ResponseEntity<UserResponse> registerClient(@RequestBody RegisterRequest request) {
+        User user = userService.createClient(
+                request.nom(),
+                request.prenom(),
+                request.whatsapp(),
+                request.password()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(

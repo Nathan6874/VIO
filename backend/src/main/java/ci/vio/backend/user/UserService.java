@@ -40,4 +40,18 @@ public class UserService {
     public Optional<User> findByWhatsapp(String whatsapp) {
         return userRepository.findByWhatsapp(whatsapp);
     }
+
+    public User createClient(String nom, String prenom, String whatsapp, String password) {
+        if (userRepository.findByWhatsapp(whatsapp).isPresent()) {
+            throw new DuplicateWhatsappException(whatsapp);
+        }
+        User user = new User();
+        user.setNom(nom);
+        user.setPrenom(prenom);
+        user.setWhatsapp(whatsapp);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(UserRole.CLIENT);
+        user.setCreatedAt(Instant.now());
+        return userRepository.save(user);
+    }
 }
