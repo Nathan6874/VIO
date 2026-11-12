@@ -19,9 +19,10 @@ public class SubscriptionService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Subscription> findActiveSubscription(User user) {
+    public Optional<SubscriptionResponse> findActiveSubscription(User user) {
         return subscriptionRepository
-                .findFirstByUserIdAndStatusOrderByEndDateDesc(user.getId(), SubscriptionStatus.ACTIVE);
+                .findFirstByUserIdAndStatusOrderByEndDateDesc(user.getId(), SubscriptionStatus.ACTIVE)
+                .map(SubscriptionResponse::from);
     }
 
     @Transactional(readOnly = true)
@@ -32,14 +33,12 @@ public class SubscriptionService {
 
     @Transactional
     public Subscription activate(User user, Plan plan) {
-        // Annuler l'ancien abonnement actif s'il existe
-        findActiveSubscription(user).ifPresent(old -> {
+        findActiveSubscriptionEntity(user).ifPresent(old -> {
             old.setStatus(SubscriptionStatus.CANCELLED);
             old.setUpdatedAt(Instant.now());
             subscriptionRepository.save(old);
         });
 
-        // Créer le nouvel abonnement
         Instant now = Instant.now();
         Subscription subscription = new Subscription();
         subscription.setUser(user);
@@ -53,5 +52,19 @@ public class SubscriptionService {
         subscription.setUpdatedAt(now);
 
         return subscriptionRepository.save(subscription);
+    }
+
+    private Optional<Subscription> findActiveSubscriptionEntity(User user) {
+        return subscriptionRepository
+                .findFirstByUserIdAndStatusOrderByEndDateDesc(user.getId(), SubscriptionStatus.ACTIVE);
+    }
+
+    @Transactional
+    public void cancelActive(User user) {
+        findActiveSubscriptionEntity(user).ifPresent(sub -> {
+            sub.setStatus(SubscriptionStatus.CANCELLED);
+            sub.setUpdatedAt(Instant.now());
+            subscriptionRepository.save(sub);
+        });
     }
 }
