@@ -9,11 +9,12 @@ import { MediaUploadComponent } from '../media-upload/media-upload.component';
 import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.component';
 import { SceneService } from '../services/scene.service';
 import { Hotspot, Scene } from '../models/scene.model';
+import { SceneManagerComponent } from '../scene-manager/scene-manager.component';
 
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, MediaUploadComponent, PanoramaViewerComponent],
+  imports: [CommonModule, RouterLink, MediaUploadComponent, PanoramaViewerComponent, SceneManagerComponent],
   template: `
     <!-- Visite 3D multi-scènes (prioritaire si des scènes existent) -->
     @if (scenes().length > 0) {
@@ -74,18 +75,11 @@ import { Hotspot, Scene } from '../models/scene.model';
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-8">
 
-              <!-- Info scènes 3D (owner uniquement) -->
+              <!-- Panneau de gestion des scènes 3D (owner uniquement) -->
               @if (isOwner()) {
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p class="text-sm text-blue-800">
-                    <strong>Visite 3D :</strong>
-                    @if (scenes().length > 0) {
-                      {{ scenes().length }} scène(s) configurée(s) : {{ sceneLabels() }}
-                    } @else {
-                      Aucune scène 3D pour cette annonce.
-                    }
-                  </p>
-                </div>
+                <app-scene-manager
+                  [propertyId]="p.id"
+                  (scenesChanged)="onScenesChanged($event)" />
               }
 
               <!-- Photos -->
@@ -170,16 +164,11 @@ export class PropertyDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
 
-    // 1. Charger la propriété
     this.propertyService.getPublicProperty(id).subscribe({
       next: (data) => {
         this.property.set(data);
         this.loading.set(false);
-
-        // 2. Charger les scènes 3D (public)
         this.loadScenes(id);
-
-        // 3. Charger les médias classiques (photos + panorama legacy)
         this.mediaService.getMedia(id).subscribe({
           next: (media) => {
             this.mediaList.set(media);
@@ -197,18 +186,12 @@ export class PropertyDetailComponent implements OnInit {
     });
   }
 
-  /**
-   * Le backend public renvoie [] si la propriété n'est pas APPROVED.
-   * Donc pour tester en tant qu'owner sur une annonce PENDING, on bascule
-   * sur l'endpoint owner (authentifié) si le public renvoie vide.
-   */
   private loadScenes(propertyId: number): void {
     this.sceneService.getScenesPublic(propertyId).subscribe({
       next: (scenes) => {
         if (scenes.length > 0) {
           this.applyScenes(scenes);
         } else if (this.isOwner()) {
-          // Fallback : charger via endpoint owner
           this.sceneService.getScenes(propertyId).subscribe({
             next: (ownerScenes) => this.applyScenes(ownerScenes),
             error: (err) => console.error('Erreur scènes (owner)', err)
@@ -219,7 +202,6 @@ export class PropertyDetailComponent implements OnInit {
         }
       },
       error: (err) => {
-        // Si 404 sur public (annonce pas APPROVED), tenter owner
         if (this.isOwner()) {
           this.sceneService.getScenes(propertyId).subscribe({
             next: (ownerScenes) => this.applyScenes(ownerScenes),
@@ -244,7 +226,6 @@ export class PropertyDetailComponent implements OnInit {
     let pending = scenes.length;
 
     for (const scene of scenes) {
-      // Essayer public d'abord, fallback owner
       this.sceneService.getHotspotsPublic(scene.id).subscribe({
         next: (hotspots) => {
           map[scene.id] = hotspots;
@@ -275,17 +256,16 @@ export class PropertyDetailComponent implements OnInit {
     }
   }
 
+  onScenesChanged(scenes: Scene[]): void {
+    this.applyScenes(scenes);
+  }
+
   isOwner(): boolean {
     const p = this.property();
     if (!p || !this.authService.isAuthenticated()) return false;
     return p.owner.whatsapp === this.authService.getWhatsapp();
   }
 
-  sceneLabels(): string {
-    return this.scenes().map(s => s.label).join(', ');
-  }
-
-  /** Convertit un ancien panoramaMedia en scène "legacy" pour le viewer multi-scènes. */
   legacyScene(): Scene {
     const p = this.property();
     const m = this.panoramaMedia();
