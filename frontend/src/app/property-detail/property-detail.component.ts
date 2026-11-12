@@ -10,6 +10,7 @@ import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.comp
 import { SceneService } from '../services/scene.service';
 import { Hotspot, Scene } from '../models/scene.model';
 import { SceneManagerComponent } from '../scene-manager/scene-manager.component';
+import { FavoriteService } from '../services/favorite.service';
 
 @Component({
   selector: 'app-property-detail',
@@ -133,6 +134,18 @@ import { SceneManagerComponent } from '../scene-manager/scene-manager.component'
                    class="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-md transition">
                   Contacter via WhatsApp
                 </a>
+
+                <!-- Bouton favori -->
+                <button (click)="toggleFavorite()"
+                        class="mt-3 w-full border-2 rounded-md py-2 font-medium transition flex items-center justify-center gap-2"
+                        [class.border-red-500]="isFavorite()"
+                        [class.text-red-600]="isFavorite()"
+                        [class.bg-red-50]="isFavorite()"
+                        [class.border-gray-300]="!isFavorite()"
+                        [class.text-gray-700]="!isFavorite()">
+                  <span class="text-xl">{{ isFavorite() ? '❤️' : '🤍' }}</span>
+                  <span>{{ isFavorite() ? 'Retirer des favoris' : 'Ajouter aux favoris' }}</span>
+                </button>
               </div>
             </div>
           </div>
@@ -155,10 +168,13 @@ export class PropertyDetailComponent implements OnInit {
   scenes = signal<Scene[]>([]);
   hotspotsByScene = signal<{ [sceneId: number]: Hotspot[] }>({});
 
+  isFavorite = signal(false);
+
   private route = inject(ActivatedRoute);
   private propertyService = inject(PropertyService);
   private mediaService = inject(MediaService);
   private sceneService = inject(SceneService);
+  private favoriteService = inject(FavoriteService);
   public authService = inject(AuthService);
 
   ngOnInit(): void {
@@ -168,7 +184,16 @@ export class PropertyDetailComponent implements OnInit {
       next: (data) => {
         this.property.set(data);
         this.loading.set(false);
+
         this.loadScenes(id);
+
+        if (this.authService.isAuthenticated()) {
+          this.favoriteService.status(id).subscribe({
+            next: (res) => this.isFavorite.set(res.isFavorite),
+            error: () => { /* pas favori ou non auth */ }
+          });
+        }
+
         this.mediaService.getMedia(id).subscribe({
           next: (media) => {
             this.mediaList.set(media);
@@ -288,6 +313,28 @@ export class PropertyDetailComponent implements OnInit {
       this.panoramaMedia.set(media);
     } else {
       this.photoMedia.update(list => [...list, media]);
+    }
+  }
+
+  toggleFavorite(): void {
+    const p = this.property();
+    if (!p) return;
+
+    if (!this.authService.isAuthenticated()) {
+      window.location.href = '/login';
+      return;
+    }
+
+    if (this.isFavorite()) {
+      this.favoriteService.remove(p.id).subscribe({
+        next: () => this.isFavorite.set(false),
+        error: (err) => console.error(err)
+      });
+    } else {
+      this.favoriteService.add(p.id).subscribe({
+        next: () => this.isFavorite.set(true),
+        error: (err) => console.error(err)
+      });
     }
   }
 }

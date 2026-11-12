@@ -12,7 +12,6 @@ import { AuthService } from '../services/auth.service';
   imports: [CommonModule, RouterLink, FormsModule],
   template: `
     <div class="min-h-screen bg-gray-50">
-      <!-- Header -->
       <header class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 class="text-2xl font-bold text-gray-900">Annonces VIO</h1>
@@ -21,16 +20,21 @@ import { AuthService } from '../services/auth.service';
               @if (authService.getRole() === 'ADMIN') {
                 <a routerLink="/admin/dashboard" class="text-sm font-medium text-blue-600 hover:text-blue-800">Admin</a>
               }
-              <a routerLink="/owner/dashboard" class="text-sm font-medium text-blue-600 hover:text-blue-800">Mes annonces</a>
+              @if (authService.getRole() === 'CLIENT') {
+                <a routerLink="/client/favorites" class="text-sm font-medium text-pink-600 hover:text-pink-800">❤️ Mes favoris</a>
+              }
+              @if (authService.getRole() === 'OWNER') {
+                <a routerLink="/owner/dashboard" class="text-sm font-medium text-blue-600 hover:text-blue-800">Mes annonces</a>
+              }
               <button (click)="authService.logout()" class="text-sm font-medium text-gray-600 hover:text-gray-900">Déconnexion</button>
             } @else {
+              <a routerLink="/register" class="text-sm font-medium text-gray-600 hover:text-gray-900">Inscription</a>
               <a routerLink="/login" class="text-sm font-medium text-blue-600 hover:text-blue-800">Connexion</a>
             }
           </nav>
         </div>
       </header>
 
-      <!-- Filtres -->
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div class="bg-white rounded-lg shadow-sm p-4 flex flex-wrap gap-4 items-end">
           <div class="flex flex-col">
@@ -78,7 +82,6 @@ import { AuthService } from '../services/auth.service';
         </div>
       </div>
 
-      <!-- Liste des annonces -->
       <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         @if (loading()) {
           <p class="text-center text-gray-500 py-12">Chargement…</p>
