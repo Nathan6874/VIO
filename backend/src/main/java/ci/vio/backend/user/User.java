@@ -6,6 +6,7 @@ import java.time.Instant;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -25,6 +26,13 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private UserRole role = UserRole.OWNER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_status", nullable = false)
+    private AccountStatus accountStatus = AccountStatus.ACTIVE;
+
+    public AccountStatus getAccountStatus() { return accountStatus; }
+    public void setAccountStatus(AccountStatus accountStatus) { this.accountStatus = accountStatus; }
 
     private Instant createdAt;
 
