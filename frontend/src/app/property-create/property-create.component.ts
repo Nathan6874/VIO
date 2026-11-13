@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { LucideAngularModule, ArrowLeft, Save, Building2 } from 'lucide-angular';
 import { PropertyService } from '../services/property.service';
 import { CreatePropertyRequest } from '../models/property.model';
 import { MediaUploadComponent } from '../media-upload/media-upload.component';
@@ -9,57 +10,61 @@ import { MediaUploadComponent } from '../media-upload/media-upload.component';
 @Component({
   selector: 'app-property-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MediaUploadComponent],
+  imports: [CommonModule, FormsModule, RouterLink, LucideAngularModule, MediaUploadComponent],
   template: `
-    <div class="min-h-screen bg-gray-50">
-      <!-- Header -->
-      <header class="bg-white shadow-sm">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <a routerLink="/owner/dashboard" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-            ← Retour à mes annonces
+    <div class="min-h-screen bg-stone-50 dark:bg-stone-950">
+      <div class="max-w-3xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-12">
+
+        <!-- En-tête -->
+        <div class="mb-6 sm:mb-8">
+          <a routerLink="/owner/dashboard" class="inline-flex items-center gap-1.5 text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white mb-3 font-medium">
+            <lucide-icon [img]="icons.ArrowLeft" class="w-4 h-4"></lucide-icon>
+            Retour à mes annonces
           </a>
-          <h1 class="text-2xl font-bold text-gray-900 mt-2">Nouvelle annonce</h1>
+          <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-stone-900 dark:text-white">Nouvelle annonce</h1>
+          <p class="text-sm sm:text-base text-stone-500 dark:text-stone-400 mt-1">Remplissez les informations du bien</p>
         </div>
-      </header>
 
-      <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="bg-white rounded-lg shadow-sm p-6">
-          <form (ngSubmit)="onSubmit()" class="space-y-4">
+        <!-- Formulaire -->
+        <div class="vio-card">
+          <form (ngSubmit)="onSubmit()" class="space-y-5">
+
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Titre *</label>
+              <label class="label">Titre de l'annonce *</label>
               <input type="text" [(ngModel)]="form.titre" name="titre" required
-                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                     placeholder="Ex: Appartement 3 pièces à Cocody"
+                     class="input" />
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-              <textarea [(ngModel)]="form.description" name="description" rows="3" required
-                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+              <label class="label">Description *</label>
+              <textarea [(ngModel)]="form.description" name="description" rows="4" required
+                        placeholder="Décrivez votre bien : équipements, quartier, transport..."
+                        class="input resize-none"></textarea>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Ville *</label>
+                <label class="label">Ville *</label>
                 <input type="text" [(ngModel)]="form.ville" name="ville" required
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       placeholder="Abidjan" class="input" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Commune *</label>
+                <label class="label">Commune *</label>
                 <input type="text" [(ngModel)]="form.commune" name="commune" required
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       placeholder="Cocody" class="input" />
               </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Prix (FCFA) *</label>
+                <label class="label">Prix (FCFA) *</label>
                 <input type="number" [(ngModel)]="form.prix" name="prix" required min="0"
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       placeholder="250000" class="input" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
-                <select [(ngModel)]="form.type" name="type" required
-                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="label">Type de bien *</label>
+                <select [(ngModel)]="form.type" name="type" required class="input">
                   <option value="APPARTEMENT">Appartement</option>
                   <option value="VILLA">Villa</option>
                   <option value="STUDIO">Studio</option>
@@ -72,38 +77,55 @@ import { MediaUploadComponent } from '../media-upload/media-upload.component';
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de pièces</label>
+                <label class="label">Nombre de pièces</label>
                 <input type="number" [(ngModel)]="form.nombrePieces" name="nombrePieces" min="0"
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       placeholder="3" class="input" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Surface (m²)</label>
+                <label class="label">Surface (m²)</label>
                 <input type="number" [(ngModel)]="form.surface" name="surface" min="0" step="0.1"
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       placeholder="75" class="input" />
               </div>
             </div>
 
             @if (error()) {
-              <p class="text-red-600 text-sm">{{ error() }}</p>
+              <div class="p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
+                <p class="text-sm text-red-700 dark:text-red-400 font-medium mb-3">{{ error() }}</p>
+                @if (error()?.includes('Limite')) {
+                  <a routerLink="/owner/subscription" class="btn-primary inline-flex">
+                    Voir les abonnements →
+                  </a>
+                }
+              </div>
             }
 
-            <button type="submit" [disabled]="loading()"
-                    class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 rounded-md transition">
+            <button type="submit" [disabled]="loading()" class="btn-primary w-full">
+              <lucide-icon [img]="icons.Save" class="w-4 h-4"></lucide-icon>
               {{ loading() ? 'Création…' : "Créer l'annonce" }}
             </button>
           </form>
         </div>
 
+        <!-- Upload médias après création -->
         @if (createdPropertyId()) {
-          <div class="mt-6">
+          <div class="vio-card mt-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center">
+                <lucide-icon [img]="icons.Building2" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></lucide-icon>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-stone-900 dark:text-white">Annonce créée !</h3>
+                <p class="text-sm text-stone-500 dark:text-stone-400">Ajoutez maintenant des photos et panoramas 360°</p>
+              </div>
+            </div>
             <app-media-upload [propertyId]="createdPropertyId()!" />
-            <a routerLink="/owner/dashboard"
-               class="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-md transition mt-4">
+            <a routerLink="/owner/dashboard" class="btn-primary w-full mt-4">
               Terminer → Mes annonces
             </a>
           </div>
         }
-      </main>
+
+      </div>
     </div>
   `
 })
@@ -124,15 +146,17 @@ export class PropertyCreateComponent {
   error = signal<string | null>(null);
   createdPropertyId = signal<number | null>(null);
 
+  icons = { ArrowLeft, Save, Building2 };
+
   constructor(
     private propertyService: PropertyService,
     private router: Router
   ) {}
 
   onSubmit(): void {
-    if (!this.form.titre.trim() || !this.form.description.trim() ||
-        !this.form.ville.trim() || !this.form.commune.trim() ||
-        this.form.prix <= 0) {
+    if (!this.form.titre.trim() || !this.form.description.trim()
+        || !this.form.ville.trim() || !this.form.commune.trim()
+        || this.form.prix <= 0) {
       this.error.set('Tous les champs obligatoires doivent être remplis');
       return;
     }
@@ -158,7 +182,11 @@ export class PropertyCreateComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set("Erreur lors de la création de l'annonce");
+        if (err.status === 403 && err.error?.message) {
+          this.error.set(err.error.message);
+        } else {
+          this.error.set("Erreur lors de la création");
+        }
         console.error(err);
       }
     });

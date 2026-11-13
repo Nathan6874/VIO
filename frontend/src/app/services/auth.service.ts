@@ -67,4 +67,36 @@ export class AuthService {
             return null;
         }
     }
+
+      getNom(): string | null {
+    const token = this.token();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.nom || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  getPrenom(): string | null {
+    const token = this.token();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.prenom || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  getInitiales(): string {
+    const prenom = this.getPrenom() || '';
+    const nom = this.getNom() || '';
+    const p = prenom.trim().charAt(0).toUpperCase();
+    const n = nom.trim().charAt(0).toUpperCase();
+    if (p || n) return p + n;
+    const w = this.getWhatsapp() || 'A';
+    return w.charAt(w.length - 2).toUpperCase() + w.charAt(w.length - 1);
+  }
 }

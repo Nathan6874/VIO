@@ -1,6 +1,11 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  LucideAngularModule, Compass, Heart, ArrowLeft, ChevronLeft, ChevronRight,
+  Maximize2, Image as ImageIcon, X, Play, Camera, MapPin
+} from 'lucide-angular';
 import { Property } from '../models/property.model';
 import { PropertyService } from '../services/property.service';
 import { Media, MediaService } from '../services/media.service';
@@ -11,147 +16,215 @@ import { SceneService } from '../services/scene.service';
 import { Hotspot, Scene } from '../models/scene.model';
 import { SceneManagerComponent } from '../scene-manager/scene-manager.component';
 import { FavoriteService } from '../services/favorite.service';
+import { ImageLightboxComponent } from '../image-lightbox/image-lightbox.component';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, MediaUploadComponent, PanoramaViewerComponent, SceneManagerComponent],
+  imports: [
+    CommonModule, FormsModule, RouterLink, LucideAngularModule,
+    MediaUploadComponent, PanoramaViewerComponent, SceneManagerComponent,
+    ImageLightboxComponent
+  ],
   template: `
-    <!-- Visite 3D multi-scènes (prioritaire si des scènes existent) -->
-    @if (scenes().length > 0) {
-      <div class="relative w-full h-screen bg-black">
-        <app-panorama-viewer
-          [scenes]="scenes()"
-          [hotspotsByScene]="hotspotsByScene()"
-          [backendBaseUrl]="'http://localhost:8087'" />
+    <div class="min-h-screen bg-stone-50 dark:bg-stone-950">
 
-        <a routerLink="/" class="absolute top-4 left-4 bg-black/60 hover:bg-black/80 text-white px-4 py-2 rounded-md backdrop-blur-sm transition z-30">
-          ← Retour
+      <!-- Breadcrumb -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <a routerLink="/" class="inline-flex items-center gap-1.5 text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white font-medium">
+          <lucide-icon [img]="icons.ArrowLeft" class="w-4 h-4"></lucide-icon>
+          Retour aux annonces
         </a>
-
-        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-8 pointer-events-none z-10">
-          <h1 class="text-3xl md:text-5xl font-bold text-white">{{ property()?.titre }}</h1>
-          <p class="text-xl text-white/80">{{ property()?.commune }}, {{ property()?.ville }}</p>
-          <p class="text-2xl font-bold text-red-400 mt-2">{{ property()?.prix }} FCFA</p>
-        </div>
       </div>
-    }
-    <!-- Fallback : ancien mode mono-scène si pas encore de scènes 3D mais un panorama legacy -->
-    @else if (panoramaMedia()) {
-      <div class="relative w-full h-screen bg-black">
-        <app-panorama-viewer
-          [scenes]="[legacyScene()]"
-          [hotspotsByScene]="{}"
-          [backendBaseUrl]="'http://localhost:8087'" />
 
-        <a routerLink="/" class="absolute top-4 left-4 bg-black/60 hover:bg-black/80 text-white px-4 py-2 rounded-md backdrop-blur-sm transition z-30">
-          ← Retour
-        </a>
-
-        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-8 pointer-events-none z-10">
-          <h1 class="text-3xl md:text-5xl font-bold text-white">{{ property()?.titre }}</h1>
-          <p class="text-xl text-white/80">{{ property()?.commune }}, {{ property()?.ville }}</p>
-          <p class="text-2xl font-bold text-red-400 mt-2">{{ property()?.prix }} FCFA</p>
-        </div>
-      </div>
-    }
-
-    <!-- Contenu scrollable -->
-    <div class="min-h-screen bg-gray-50">
       @if (loading()) {
-        <div class="max-w-7xl mx-auto px-4 py-12 text-center text-gray-500">Chargement…</div>
+        <div class="max-w-7xl mx-auto px-4 py-12 text-center text-stone-500">Chargement…</div>
       } @else if (error()) {
         <div class="max-w-7xl mx-auto px-4 py-12 text-center text-red-600">{{ error() }}</div>
       } @else if (property()) {
         @let p = property()!;
 
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          @if (scenes().length === 0 && !panoramaMedia()) {
-            <div class="mb-8">
-              <h1 class="text-4xl font-bold text-gray-900">{{ p.titre }}</h1>
-              <p class="text-lg text-gray-600">{{ p.commune }}, {{ p.ville }}</p>
-            </div>
-          }
+        <!-- ═══════════ SECTION PRINCIPALE ═══════════ -->
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mb-8">
 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 space-y-8">
+            <!-- Colonne visuel (photo principale OU panorama) -->
+            <div class="lg:col-span-2">
+              @if (mainPhotoUrl()) {
+                <!-- CAS A : photo principale + bouton visite 3D si dispo -->
+                <div class="relative rounded-2xl overflow-hidden aspect-video bg-stone-200 dark:bg-stone-800 group cursor-pointer"
+                     (click)="openLightbox(0)">
+                  <img [src]="mainPhotoUrl()!" [alt]="p.titre"
+                       class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
 
-              <!-- Panneau de gestion des scènes 3D (owner uniquement) -->
-              @if (isOwner()) {
-                <app-scene-manager
-                  [propertyId]="p.id"
-                  (scenesChanged)="onScenesChanged($event)" />
-              }
-
-              <!-- Photos -->
-              @if (photoMedia().length > 0) {
-                <div>
-                  <h2 class="text-2xl font-bold text-gray-900 mb-4">Photos</h2>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    @for (m of photoMedia(); track m.id) {
-                      <img [src]="'http://localhost:8087' + m.url"
-                           alt="Photo du bien"
-                           class="w-full h-72 object-cover rounded-lg shadow-sm hover:shadow-md transition" />
-                    }
+                  <!-- Overlay hover -->
+                  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <div class="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 dark:bg-stone-900/90 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
+                      <lucide-icon [img]="icons.Maximize2" class="w-4 h-4 text-stone-900 dark:text-white"></lucide-icon>
+                      <span class="text-sm font-semibold text-stone-900 dark:text-white">Agrandir</span>
+                    </div>
                   </div>
-                </div>
-              }
 
-              <!-- Description -->
-              <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">Description</h2>
-                <p class="text-gray-700 leading-relaxed">{{ p.description }}</p>
-              </div>
+                  <!-- Bouton visite 3D flottant -->
+                  @if (hasTour()) {
+                    <button (click)="scrollToTour(); $event.stopPropagation()"
+                            class="absolute bottom-4 left-4 bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm hover:bg-white dark:hover:bg-stone-900 text-stone-900 dark:text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-sm font-bold transition-all hover:scale-105">
+                      <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                        <lucide-icon [img]="icons.Play" class="w-3.5 h-3.5 text-white fill-white"></lucide-icon>
+                      </div>
+                      Visite 3D
+                    </button>
+                  }
 
-              <!-- Upload média legacy (photos) -->
-              @if (isOwner()) {
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                  <button (click)="showUpload.set(!showUpload())"
-                          class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-md transition">
-                    {{ showUpload() ? "Masquer l'upload" : '+ Ajouter un média' }}
-                  </button>
-                  @if (showUpload()) {
-                    <div class="mt-4">
-                      <app-media-upload [propertyId]="p.id" (mediaUploaded)="onMediaUploaded($event)" />
+                  <!-- Indicateur nombre de photos -->
+                  @if (photos().length > 1) {
+                    <div class="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold">
+                      <lucide-icon [img]="icons.Camera" class="w-3.5 h-3.5"></lucide-icon>
+                      {{ photos().length }} photos
                     </div>
                   }
+                </div>
+              } @else if (hasTour()) {
+                <!-- CAS B : pas de photo, mais panorama dispo → panorama en avant -->
+                <div id="tour-section" class="relative rounded-2xl overflow-hidden aspect-video bg-black">
+                  <app-panorama-viewer
+                    [scenes]="scenes().length > 0 ? scenes() : [legacyScene()]"
+                    [hotspotsByScene]="scenes().length > 0 ? hotspotsByScene() : {}"
+                    [backendBaseUrl]="'http://localhost:8087'" />
+                  <div class="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                    <lucide-icon [img]="icons.Compass" class="w-3.5 h-3.5"></lucide-icon>
+                    Visite virtuelle 360°
+                  </div>
+                </div>
+              } @else {
+                <!-- CAS C : rien du tout → placeholder -->
+                <div class="rounded-2xl overflow-hidden aspect-video bg-stone-100 dark:bg-stone-800 flex flex-col items-center justify-center">
+                  <lucide-icon [img]="icons.ImageIcon" class="w-16 h-16 text-stone-300 dark:text-stone-600 mb-3"></lucide-icon>
+                  <p class="text-stone-500 dark:text-stone-400 text-sm font-medium">Aucune photo disponible</p>
+                  <p class="text-stone-400 dark:text-stone-500 text-xs mt-1">Le propriétaire n'a pas encore ajouté de photos</p>
                 </div>
               }
             </div>
 
             <!-- Sidebar -->
             <div class="lg:col-span-1">
-              <div class="bg-white rounded-lg shadow-sm p-6 sticky top-4">
-                <p class="text-3xl font-bold text-red-600 mb-2">{{ p.prix }} FCFA</p>
-                <p class="text-sm text-gray-500 mb-4">{{ p.type }} — {{ p.nombrePieces ?? '?' }} pièces — {{ p.surface ?? '?' }} m²</p>
-                <hr class="my-4" />
-                <h3 class="text-sm font-semibold text-gray-600 mb-2">Propriétaire</h3>
-                <p class="text-gray-900 font-medium">{{ p.owner.prenom }} {{ p.owner.nom }}</p>
-                <p class="text-sm text-gray-500">{{ p.owner.whatsapp }}</p>
-                <hr class="my-4" />
-                <a [href]="'https://wa.me/' + p.owner.whatsapp.replace('+', '')"
-                   target="_blank"
-                   class="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-md transition">
-                  Contacter via WhatsApp
+              <div class="vio-card sticky top-20">
+                <p class="text-3xl font-black text-red-600 mb-1">{{ p.prix.toLocaleString('fr-FR') }} FCFA</p>
+                <p class="text-sm text-stone-500 dark:text-stone-400 mb-4">
+                  {{ p.type }} · {{ p.nombrePieces ?? '?' }} pièces · {{ p.surface ?? '?' }} m²
+                </p>
+
+                <hr class="my-4 border-stone-200 dark:border-stone-800" />
+
+                <h3 class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-2">Propriétaire</h3>
+                <p class="font-bold text-stone-900 dark:text-white">{{ p.owner.prenom }} {{ p.owner.nom }}</p>
+                <p class="text-sm text-stone-500 dark:text-stone-400">{{ p.owner.whatsapp }}</p>
+
+                <hr class="my-4 border-stone-200 dark:border-stone-800" />
+
+                <a [href]="'https://wa.me/' + p.owner.whatsapp.replace('+', '')" target="_blank" class="btn-primary w-full">
+                  💬 Contacter via WhatsApp
                 </a>
 
-                <!-- Bouton favori -->
-                <button (click)="toggleFavorite()"
-                        class="mt-3 w-full border-2 rounded-md py-2 font-medium transition flex items-center justify-center gap-2"
-                        [class.border-red-500]="isFavorite()"
-                        [class.text-red-600]="isFavorite()"
-                        [class.bg-red-50]="isFavorite()"
-                        [class.border-gray-300]="!isFavorite()"
-                        [class.text-gray-700]="!isFavorite()">
-                  <span class="text-xl">{{ isFavorite() ? '❤️' : '🤍' }}</span>
-                  <span>{{ isFavorite() ? 'Retirer des favoris' : 'Ajouter aux favoris' }}</span>
+                <button (click)="toggleFavorite()" class="btn-secondary w-full mt-3">
+                  <lucide-icon [img]="icons.Heart" class="w-4 h-4"
+                               [style.fill]="isFavorite() ? '#dc2626' : 'none'"
+                               [style.color]="isFavorite() ? '#dc2626' : 'currentColor'"></lucide-icon>
+                  {{ isFavorite() ? 'Retirer des favoris' : 'Ajouter aux favoris' }}
                 </button>
+
+                @if (hasTour()) {
+                  <button (click)="scrollToTour()" class="btn-secondary w-full mt-3">
+                    <lucide-icon [img]="icons.Compass" class="w-4 h-4"></lucide-icon>
+                    Voir la visite 3D
+                  </button>
+                }
               </div>
             </div>
           </div>
-        </main>
+
+          <!-- Description -->
+          <div class="vio-card mb-6">
+            <h2 class="text-xl font-bold text-stone-900 dark:text-white mb-3">{{ p.titre }}</h2>
+            <p class="text-stone-700 dark:text-stone-300 leading-relaxed mb-4">{{ p.description }}</p>
+            <div class="flex items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
+              <lucide-icon [img]="icons.MapPin" class="w-4 h-4"></lucide-icon>
+              {{ p.commune }}, {{ p.ville }}
+            </div>
+          </div>
+
+          <!-- Galerie photos -->
+          @if (photos().length > 1) {
+            <div class="vio-card mb-6">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-stone-900 dark:text-white">
+                  Photos ({{ photos().length }})
+                </h2>
+                <span class="text-xs text-stone-500 dark:text-stone-400">Cliquez pour agrandir</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                @for (photo of photos(); track photo.id; let idx = $index) {
+                  <div class="relative aspect-square rounded-xl overflow-hidden cursor-pointer group bg-stone-100 dark:bg-stone-800"
+                       (click)="openLightbox(idx)">
+                    <img [src]="'http://localhost:8087' + photo.url" [alt]="p.titre"
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                      <lucide-icon [img]="icons.Maximize2" class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity"></lucide-icon>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Section visite 3D (si photos ET panorama → en bas) -->
+          @if (hasTour() && photos().length > 0) {
+            <div class="vio-card mb-6" id="tour-section">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-stone-900 dark:text-white flex items-center gap-2">
+                  <lucide-icon [img]="icons.Compass" class="w-5 h-5 text-blue-600 dark:text-blue-400"></lucide-icon>
+                  Visite virtuelle 360°
+                </h2>
+                <span class="text-xs text-stone-500 dark:text-stone-400">Faites glisser pour explorer</span>
+              </div>
+              <div class="relative rounded-xl overflow-hidden aspect-video bg-black">
+                <app-panorama-viewer
+                  [scenes]="scenes().length > 0 ? scenes() : [legacyScene()]"
+                  [hotspotsByScene]="scenes().length > 0 ? hotspotsByScene() : {}"
+                  [backendBaseUrl]="'http://localhost:8087'" />
+              </div>
+            </div>
+          }
+
+          <!-- Gestion scènes (owner) -->
+          @if (isOwner()) {
+            <div class="mb-6">
+              <app-scene-manager
+                [propertyId]="p.id"
+                (scenesChanged)="onScenesChanged($event)" />
+            </div>
+
+            <div class="vio-card">
+              <button (click)="showUpload.set(!showUpload())" class="btn-secondary">
+                {{ showUpload() ? "Masquer l'upload" : '+ Ajouter un média' }}
+              </button>
+              @if (showUpload()) {
+                <div class="mt-4">
+                  <app-media-upload [propertyId]="p.id" (mediaUploaded)="onMediaUploaded($event)" />
+                </div>
+              }
+            </div>
+          }
+
+        </div>
       }
     </div>
+
+    <!-- Lightbox -->
+    <app-image-lightbox
+      [imageList]="lightboxImages()"
+      [openIndex]="lightboxIndex()" />
   `
 })
 export class PropertyDetailComponent implements OnInit {
@@ -163,12 +236,17 @@ export class PropertyDetailComponent implements OnInit {
   showUpload = signal(false);
 
   panoramaMedia = signal<Media | null>(null);
-  photoMedia = signal<Media[]>([]);
+  photos = signal<Media[]>([]);
+  mainPhotoUrl = signal<string | null>(null);
 
   scenes = signal<Scene[]>([]);
   hotspotsByScene = signal<{ [sceneId: number]: Hotspot[] }>({});
 
   isFavorite = signal(false);
+
+  lightboxIndex = signal<number | null>(null);
+
+  icons = { Compass, Heart, ArrowLeft, ChevronLeft, ChevronRight, Maximize2, ImageIcon, X, Play, Camera, MapPin };
 
   private route = inject(ActivatedRoute);
   private propertyService = inject(PropertyService);
@@ -176,39 +254,73 @@ export class PropertyDetailComponent implements OnInit {
   private sceneService = inject(SceneService);
   private favoriteService = inject(FavoriteService);
   public authService = inject(AuthService);
+  private http = inject(HttpClient);
 
   ngOnInit(): void {
+    window.scrollTo(0, 0);
+
     const id = Number(this.route.snapshot.paramMap.get('id'));
+
+    // Track la vue (1 fois par session)
+    const viewKey = `vio_viewed_${id}`;
+    if (!sessionStorage.getItem(viewKey)) {
+      this.http.post(`http://localhost:8087/api/properties/${id}/public/view`, {}).subscribe({
+        next: () => sessionStorage.setItem(viewKey, '1'),
+        error: (err) => console.error('track view error', err)
+      });
+    }
 
     this.propertyService.getPublicProperty(id).subscribe({
       next: (data) => {
         this.property.set(data);
         this.loading.set(false);
-
         this.loadScenes(id);
 
         if (this.authService.isAuthenticated()) {
           this.favoriteService.status(id).subscribe({
             next: (res) => this.isFavorite.set(res.isFavorite),
-            error: () => { /* pas favori ou non auth */ }
+            error: () => {}
           });
         }
 
         this.mediaService.getMedia(id).subscribe({
           next: (media) => {
             this.mediaList.set(media);
+            const photoList = media.filter(m => m.type === 'PHOTO');
+            this.photos.set(photoList);
             this.panoramaMedia.set(media.find(m => m.type === 'PANORAMA_360') || null);
-            this.photoMedia.set(media.filter(m => m.type === 'PHOTO'));
+
+            // Photo principale : première photo
+            if (photoList.length > 0) {
+              this.mainPhotoUrl.set('http://localhost:8087' + photoList[0].url);
+            }
           },
-          error: (err) => console.error('Erreur chargement médias', err)
+          error: (err) => console.error('Erreur médias', err)
         });
       },
       error: (err) => {
-        this.error.set('Annonce introuvable ou erreur serveur');
+        this.error.set('Annonce introuvable');
         this.loading.set(false);
         console.error(err);
       }
     });
+
+  }
+
+  hasTour(): boolean {
+    return this.scenes().length > 0 || this.panoramaMedia() !== null;
+  }
+
+  lightboxImages(): string[] {
+    return this.photos().map(p => 'http://localhost:8087' + p.url);
+  }
+
+  openLightbox(index: number): void {
+    this.lightboxIndex.set(index);
+  }
+
+  scrollToTour(): void {
+    document.getElementById('tour-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   private loadScenes(propertyId: number): void {
@@ -219,22 +331,18 @@ export class PropertyDetailComponent implements OnInit {
         } else if (this.isOwner()) {
           this.sceneService.getScenes(propertyId).subscribe({
             next: (ownerScenes) => this.applyScenes(ownerScenes),
-            error: (err) => console.error('Erreur scènes (owner)', err)
+            error: () => {}
           });
         } else {
           this.scenes.set([]);
-          this.hotspotsByScene.set({});
         }
       },
-      error: (err) => {
+      error: () => {
         if (this.isOwner()) {
           this.sceneService.getScenes(propertyId).subscribe({
             next: (ownerScenes) => this.applyScenes(ownerScenes),
-            error: (e) => console.error('Erreur scènes (owner fallback)', e)
+            error: () => {}
           });
-        } else {
-          console.error('Erreur chargement scènes', err);
-          this.scenes.set([]);
         }
       }
     });
@@ -312,19 +420,20 @@ export class PropertyDetailComponent implements OnInit {
     if (media.type === 'PANORAMA_360') {
       this.panoramaMedia.set(media);
     } else {
-      this.photoMedia.update(list => [...list, media]);
+      this.photos.update(list => [...list, media]);
+      if (!this.mainPhotoUrl()) {
+        this.mainPhotoUrl.set('http://localhost:8087' + media.url);
+      }
     }
   }
 
   toggleFavorite(): void {
     const p = this.property();
     if (!p) return;
-
     if (!this.authService.isAuthenticated()) {
       window.location.href = '/login';
       return;
     }
-
     if (this.isFavorite()) {
       this.favoriteService.remove(p.id).subscribe({
         next: () => this.isFavorite.set(false),
