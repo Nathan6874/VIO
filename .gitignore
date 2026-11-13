@@ -24,3 +24,4 @@ Thumbs.db
 
 # Fichier de configuration local (contient des secrets)
 application-local.properties
+frontend/ngrok-v3-stable-linux-amd64.tgz
