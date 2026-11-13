@@ -11,6 +11,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 import java.time.Instant;
 
@@ -145,5 +147,19 @@ public class Property {
 
     public void setStatus(PropertyStatus status) {
         this.status = status;
+    }
+
+    @PrePersist
+    @PreUpdate
+    public void normalizeFields() {
+        if (this.titre != null) {
+            this.titre = ci.vio.backend.common.NameCapitalizer.capitalize(this.titre);
+        }
+        if (this.ville != null) {
+            this.ville = ci.vio.backend.common.NameCapitalizer.capitalize(this.ville);
+        }
+        if (this.commune != null) {
+            this.commune = ci.vio.backend.common.NameCapitalizer.capitalize(this.commune);
+        }
     }
 }

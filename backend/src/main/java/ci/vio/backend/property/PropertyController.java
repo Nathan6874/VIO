@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/properties")
@@ -72,6 +73,15 @@ public class PropertyController {
         return userService.findByWhatsapp(whatsapp)
                 .orElseThrow(() -> new IllegalStateException(
                         "Utilisateur authentifié introuvable : " + whatsapp));
+    }
+
+    @ExceptionHandler(PropertyLimitExceededException.class)
+    public ResponseEntity<Map<String, String>> handleLimitExceeded(PropertyLimitExceededException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of(
+                        "error", "PropertyLimitExceeded",
+                        "message", ex.getMessage()
+                ));
     }
 
 }

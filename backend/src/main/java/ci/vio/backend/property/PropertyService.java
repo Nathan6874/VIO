@@ -1,5 +1,7 @@
 package ci.vio.backend.property;
 
+import ci.vio.backend.subscription.Plan;
+import ci.vio.backend.subscription.SubscriptionService;
 import ci.vio.backend.user.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,9 +13,12 @@ import java.util.List;
 public class PropertyService {
 
     private final PropertyRepository propertyRepository;
+    private final SubscriptionService subscriptionService;
 
-    public PropertyService(PropertyRepository propertyRepository) {
+    public PropertyService(PropertyRepository propertyRepository,
+                           SubscriptionService subscriptionService) {
         this.propertyRepository = propertyRepository;
+        this.subscriptionService = subscriptionService;
     }
 
     @Transactional(readOnly = true)
@@ -28,6 +33,20 @@ public class PropertyService {
     public PropertyResponse create(User owner, String titre, String description,
                                    String ville, String commune, Double prix,
                                    PropertyType type, Integer nombrePieces, Double surface) {
+
+        // 1. Vérifier la limite du plan
+        Plan plan = subscriptionService.getCurrentPlan(owner);
+        if (plan != null && plan.getMaxProperties() != null) {
+            long currentCount = propertyRepository.findByOwner(owner).size();
+            if (currentCount >= plan.getMaxProperties()) {
+                throw new PropertyLimitExceededException(
+                        "Limite atteinte : votre plan " + plan.getName() +
+                                " permet " + plan.getMaxProperties() + " annonce(s) maximum. " +
+                                "Passez à un plan supérieur pour publier plus."
+                );
+            }
+        }
+
         Property property = new Property();
         property.setOwner(owner);
         property.setTitre(titre);

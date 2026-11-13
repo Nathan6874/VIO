@@ -61,7 +61,12 @@ public class AuthController {
         // Récupérer le rôle depuis l'utilisateur
         User user = userService.findByWhatsapp(authentication.getName())
                 .orElseThrow(() -> new IllegalStateException("Utilisateur introuvable"));
-        String token = jwtService.generateToken(authentication.getName(), user.getRole().name());
+        String token = jwtService.generateToken(
+                authentication.getName(),
+                user.getRole().name(),
+                user.getNom(),
+                user.getPrenom()
+        );
 
         return ResponseEntity.ok(new LoginResponse(token));
     }

@@ -37,6 +37,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Skip JWT for public routes
+        if (request.getRequestURI().startsWith("/uploads/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String token = authHeader.substring(7);
 
         if (!jwtService.isTokenValid(token)) {

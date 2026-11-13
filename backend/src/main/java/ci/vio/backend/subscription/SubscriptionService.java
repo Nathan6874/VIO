@@ -13,9 +13,11 @@ import java.util.Optional;
 public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
+    private final PlanRepository planRepository;
 
-    public SubscriptionService(SubscriptionRepository subscriptionRepository) {
+    public SubscriptionService(SubscriptionRepository subscriptionRepository, PlanRepository planRepository) {
         this.subscriptionRepository = subscriptionRepository;
+        this.planRepository = planRepository;
     }
 
     @Transactional(readOnly = true)
@@ -66,5 +68,12 @@ public class SubscriptionService {
             sub.setUpdatedAt(Instant.now());
             subscriptionRepository.save(sub);
         });
+    }
+
+    @Transactional(readOnly = true)
+    public Plan getCurrentPlan(User user) {
+        return findActiveSubscription(user)
+                .flatMap(subResp -> planRepository.findByCode(subResp.planCode()))
+                .orElseGet(() -> planRepository.findByCode("FREE").orElse(null));
     }
 }

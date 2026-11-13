@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 
 @Entity
@@ -95,5 +97,16 @@ public class User {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    @PrePersist
+    @PreUpdate
+    public void normalizeNames() {
+        if (this.nom != null) {
+            this.nom = ci.vio.backend.common.NameCapitalizer.capitalize(this.nom);
+        }
+        if (this.prenom != null) {
+            this.prenom = ci.vio.backend.common.NameCapitalizer.capitalize(this.prenom);
+        }
     }
 }

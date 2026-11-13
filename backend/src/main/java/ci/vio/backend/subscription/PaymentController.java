@@ -22,23 +22,41 @@ public class PaymentController {
         this.userService = userService;
     }
 
+    /**
+     * Initie un paiement :
+     * - Plan gratuit → activation directe (retourne mode="free-activation")
+     * - Plan payant → appel Jeko (retourne mode="jeko-payment" + redirectUrl)
+     */
     @PostMapping("/initiate")
     public ResponseEntity<?> initiate(@RequestBody InitiateRequest request, Authentication auth) {
         User user = getUser(auth);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(paymentService.initiateMock(user, request.planCode()));
+                .body(paymentService.initiate(user, request.planCode()));
     }
 
+    /**
+     *  Endpoint de test UNIQUEMENT : permet de simuler un paiement sans Jeko.
+     * En prod, on passe exclusivement par le webhook Jeko.
+     * On le garde pour les tests locaux.
+     */
     @PostMapping("/mock-confirm/{paymentId}")
-    public ResponseEntity<?> mockConfirm(@PathVariable Long paymentId) {
-        Payment payment = paymentService.confirmMock(paymentId);
+    public ResponseEntity<?> mockConfirm(@PathVariable Long paymentId,
+                                         @RequestBody(required = false) Map<String, String> body) {
+        String reference = body != null ? body.get("reference") : null;
+        // Fallback : si pas de reference, on l'ignore et on utilise un confirmByReference direct
+        if (reference == null) {
+            reference = "VIO-" + paymentId + "-manual";
+        }
+        paymentService.confirmByReference(reference);
         return ResponseEntity.ok(Map.of(
-                "status", payment.getStatus().name(),
-                "paymentId", payment.getId(),
-                "subscriptionId", payment.getSubscription() != null ? payment.getSubscription().getId() : null
+                "status", "SUCCESS",
+                "paymentId", paymentId
         ));
     }
 
+    /**
+     * Historique des paiements du user connecté.
+     */
     @GetMapping("/history")
     public List<Map<String, Object>> history(Authentication auth) {
         User user = getUser(auth);
