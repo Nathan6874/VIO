@@ -20,6 +20,7 @@ export interface Property {
   owner: PropertyOwner;
   coverImageUrl: string | null;
   sceneCount: number;
+  hasPanorama: boolean;
 }
 
 export interface CreatePropertyRequest {

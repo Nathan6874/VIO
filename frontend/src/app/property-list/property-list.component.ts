@@ -121,7 +121,7 @@ import { HeroBackgroundComponent } from '../hero-background/hero-background.comp
                   }
                   
                   <!-- Badge Visite 3D -->
-                  @if (p.sceneCount > 0) {
+                  @if (p.sceneCount > 0 || p.hasPanorama) {
                     <div class="absolute top-3 right-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
                       <span>🎥</span>
                       <span>Visite 3D</span>

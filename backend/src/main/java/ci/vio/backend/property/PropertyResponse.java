@@ -19,7 +19,8 @@ public record PropertyResponse(
         Instant createdAt,
         OwnerInfo owner,
         String coverImageUrl,
-        int sceneCount
+        int sceneCount,
+        boolean hasPanorama
 ) {
     public record OwnerInfo(
             Long id,
@@ -53,11 +54,13 @@ public record PropertyResponse(
         }
 
         String coverImageUrl = null;
+        boolean hasPanorama = false;
+
         if (mediaRepository != null) {
             List<ci.vio.backend.media.Media> medias = mediaRepository.findByPropertyId(property.getId());
             if (medias != null && !medias.isEmpty()) {
-                // On suppose que le 1er média est la cover. À trier par ordre si besoin.
                 coverImageUrl = medias.get(0).getUrl();
+                hasPanorama = medias.stream().anyMatch(m -> "PANORAMA_360".equals(m.getType()));
             }
         }
 
@@ -80,7 +83,8 @@ public record PropertyResponse(
                 property.getCreatedAt(),
                 ownerInfo,
                 coverImageUrl,
-                sceneCount
+                sceneCount,
+                hasPanorama
         );
     }
 }
