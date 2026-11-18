@@ -29,7 +29,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
       <div class="bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800 sticky top-16 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav class="flex gap-1 overflow-x-auto">
-            <button (click)="section.set('overview')"; resetSearch()
+            <button (click)="section.set('overview'); resetSearch()"
                     [class.border-blue-600]="section() === 'overview'"
                     [class.text-blue-600]="section() === 'overview'"
                     [class.border-transparent]="section() !== 'overview'"
@@ -39,7 +39,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
               <lucide-icon [img]="icons.LayoutDashboard" class="w-4 h-4"></lucide-icon>
               Vue d'ensemble
             </button>
-            <button (click)="section.set('properties')"; resetSearch()
+            <button (click)="section.set('properties'); resetSearch()"
                     [class.border-blue-600]="section() === 'properties'"
                     [class.text-blue-600]="section() === 'properties'"
                     [class.border-transparent]="section() !== 'properties'"
@@ -52,7 +52,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
                 <span class="bg-amber-500 text-stone-900 text-xs px-2 py-0.5 rounded-full font-bold">{{ stats()!.pendingProperties }}</span>
               }
             </button>
-            <button (click)="section.set('users')"; resetSearch()
+            <button (click)="section.set('users'); resetSearch()"
                     [class.border-blue-600]="section() === 'users'"
                     [class.text-blue-600]="section() === 'users'"
                     [class.border-transparent]="section() !== 'users'"
@@ -62,7 +62,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
               <lucide-icon [img]="icons.Users" class="w-4 h-4"></lucide-icon>
               Utilisateurs
             </button>
-            <button (click)="section.set('reports')"; resetSearch()
+            <button (click)="section.set('reports'); resetSearch()"
                     [class.border-blue-600]="section() === 'reports'"
                     [class.text-blue-600]="section() === 'reports'"
                     [class.border-transparent]="section() !== 'reports'"
@@ -75,7 +75,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
                 <span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">{{ stats()!.openReports }}</span>
               }
             </button>
-            <button (click)="section.set('payments')"; resetSearch()
+            <button (click)="section.set('payments'); resetSearch()"
                     [class.border-blue-600]="section() === 'payments'"
                     [class.text-blue-600]="section() === 'payments'"
                     [class.border-transparent]="section() !== 'payments'"
@@ -85,7 +85,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
               <lucide-icon [img]="icons.CreditCard" class="w-4 h-4"></lucide-icon>
               Paiements
             </button>
-            <button (click)="section.set('subscriptions')"; resetSearch()
+            <button (click)="section.set('subscriptions'); resetSearch()"
                     [class.border-blue-600]="section() === 'subscriptions'"
                     [class.text-blue-600]="section() === 'subscriptions'"
                     [class.border-transparent]="section() !== 'subscriptions'"
@@ -95,7 +95,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
               <lucide-icon [img]="icons.Calendar" class="w-4 h-4"></lucide-icon>
               Abonnements
             </button>
-            <button (click)="section.set('audit')"; resetSearch()
+            <button (click)="section.set('audit'); resetSearch()"
                     [class.border-blue-600]="section() === 'audit'"
                     [class.text-blue-600]="section() === 'audit'"
                     [class.border-transparent]="section() !== 'audit'"
@@ -256,7 +256,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
           <div class="mb-4 flex gap-3 flex-wrap items-center">
             <div class="relative flex-1 max-w-md">
               <lucide-icon [img]="icons.Search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></lucide-icon>
-              <input type="text" [(ngModel)]="searchQuery" placeholder="Rechercher une annonce…"
+              <input type="text" [ngModel]="searchQueryProperties()" (ngModelChange)="searchQueryProperties.set($event)" placeholder="Rechercher une annonce…"
                     class="input pl-10" />
             </div>
             <select [ngModel]="propertyStatusFilter()" 
@@ -272,7 +272,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
           @if (filteredProperties().length === 0) {
             <div class="vio-card text-center py-16">
               <lucide-icon [img]="icons.Check" class="w-12 h-12 mx-auto mb-3 text-green-500"></lucide-icon>
-              <p class="text-stone-700 dark:text-stone-300 font-medium">Aucune annonce en attente</p>
+              <p class="text-stone-700 dark:text-stone-300 font-medium">Aucune annonce</p>
             </div>
           } @else {
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -280,13 +280,17 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
                 <div class="vio-card">
                   <div class="flex justify-between items-start mb-2">
                     <h3 class="font-bold text-stone-900 dark:text-white truncate">{{ p.titre }}</h3>
-                    <span class="badge-warning flex-shrink-0 ml-2">PENDING</span>
+                    <span class="badge flex-shrink-0 ml-2"
+                          [class.badge-warning]="p.status === 'PENDING'"
+                          [class.badge-success]="p.status === 'APPROVED'"
+                          [class.badge-danger]="p.status === 'REJECTED'">
+                      {{ p.status }}
+                    </span>
                   </div>
                   <p class="text-sm text-stone-600 dark:text-stone-400 mb-3">{{ p.commune }}, {{ p.ville }}</p>
                   <p class="text-xl font-bold text-red-600 dark:text-red-400 mb-3">{{ p.prix.toLocaleString('fr-FR') }} FCFA</p>
                   <p class="text-sm text-stone-700 dark:text-stone-300 line-clamp-2 mb-3">{{ p.description }}</p>
                   <div class="border-t border-stone-100 dark:border-stone-800 pt-3 mt-3 space-y-2">
-                    <!-- Bouton "Voir l'annonce" -->
                     <button (click)="goToProperty(p.id)" 
                             class="w-full btn-secondary text-blue-600 dark:text-blue-400 flex items-center justify-center gap-2">
                       👁 Voir l'annonce complète
@@ -324,7 +328,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
           <div class="mb-4 flex gap-3 flex-wrap items-center">
             <div class="relative flex-1 max-w-md">
               <lucide-icon [img]="icons.Search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></lucide-icon>
-              <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="Rechercher un utilisateur…"
+              <input type="text" [ngModel]="searchQueryUsers()" (ngModelChange)="searchQueryUsers.set($event)" placeholder="Rechercher un utilisateur…"
                       class="input pl-10" />
             </div>
             <select [(ngModel)]="userRoleFilter" class="input max-w-xs">
@@ -461,7 +465,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
         @if (section() === 'audit') {
           <div class="mb-4 relative max-w-md">
             <lucide-icon [img]="icons.Search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></lucide-icon>
-            <input type="text" [(ngModel)]="searchQuery" placeholder="Rechercher une action…" class="input pl-10" />
+            <input type="text" [ngModel]="searchQueryAudit()" (ngModelChange)="searchQueryAudit.set($event)" placeholder="Rechercher une action…" class="input pl-10" />
           </div>
 
           <div class="vio-card overflow-hidden p-0">
@@ -497,7 +501,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
           <div class="mb-4 flex items-center justify-between gap-4 flex-wrap">
             <div class="relative flex-1 max-w-md">
               <lucide-icon [img]="icons.Search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></lucide-icon>
-              <input type="text" [(ngModel)]="searchQuery" placeholder="Rechercher un paiement…" class="input pl-10" />
+              <input type="text" [ngModel]="searchQueryPayments()" (ngModelChange)="searchQueryPayments.set($event)" placeholder="Rechercher un paiement…" class="input pl-10" />
             </div>
             <div class="bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-xl px-5 py-3">
               <p class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">Total revenus</p>
@@ -565,7 +569,7 @@ type Section = 'overview' | 'properties' | 'users' | 'reports' | 'audit' | 'paym
         @if (section() === 'subscriptions') {
           <div class="mb-4 relative max-w-md">
             <lucide-icon [img]="icons.Search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></lucide-icon>
-            <input type="text" [(ngModel)]="searchQuery" placeholder="Rechercher un abonnement…" class="input pl-10" />
+            <input type="text" [ngModel]="searchQuerySubscriptions()" (ngModelChange)="searchQuerySubscriptions.set($event)" placeholder="Rechercher un abonnement…" class="input pl-10" />
           </div>
 
           <div class="vio-card overflow-hidden p-0">
@@ -629,8 +633,15 @@ export class AdminDashboardComponent implements OnInit {
   subscriptions = signal<AdminSubscription[]>([]);
   revenueStats = signal<RevenueStats | null>(null);
   propertyStatusFilter = signal<string>('');
+  allProperties = signal<Property[]>([]);
 
-  searchQuery = signal('');
+  // Un signal de recherche par onglet
+  searchQueryProperties = signal('');
+  searchQueryUsers = signal('');
+  searchQueryAudit = signal('');
+  searchQueryPayments = signal('');
+  searchQuerySubscriptions = signal('');
+  
   userRoleFilter = '';
   userStatusFilter = '';
   resolutionText = '';
@@ -642,13 +653,11 @@ export class AdminDashboardComponent implements OnInit {
     CreditCard, Calendar, Banknote
   };
 
-  // === Computed réactifs (filtrage immédiat à la frappe) ===
-
-      allProperties = signal<Property[]>([]);
+  // === Computed réactifs (un par onglet) ===
 
   filteredProperties = computed(() => {
     let list = this.allProperties();
-    const q = this.searchQuery().toLowerCase().trim();
+    const q = this.searchQueryProperties().toLowerCase().trim();
     const status = this.propertyStatusFilter();
     
     if (q) {
@@ -667,7 +676,7 @@ export class AdminDashboardComponent implements OnInit {
 
   filteredUsers = computed(() => {
     let list = this.users();
-    const q = this.searchQuery().toLowerCase().trim();
+    const q = this.searchQueryUsers().toLowerCase().trim();
     if (q) list = list.filter(u =>
       u.nom.toLowerCase().includes(q) ||
       u.prenom.toLowerCase().includes(q) ||
@@ -679,7 +688,7 @@ export class AdminDashboardComponent implements OnInit {
   });
 
   filteredAuditLogs = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
+    const q = this.searchQueryAudit().toLowerCase().trim();
     if (!q) return this.auditLogs();
     return this.auditLogs().filter(l =>
       l.action.toLowerCase().includes(q) ||
@@ -689,7 +698,7 @@ export class AdminDashboardComponent implements OnInit {
   });
 
   filteredPayments = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
+    const q = this.searchQueryPayments().toLowerCase().trim();
     if (!q) return this.payments();
     return this.payments().filter(p =>
       p.userPrenom.toLowerCase().includes(q) ||
@@ -703,7 +712,7 @@ export class AdminDashboardComponent implements OnInit {
   });
 
   filteredSubscriptions = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
+    const q = this.searchQuerySubscriptions().toLowerCase().trim();
     if (!q) return this.subscriptions();
     return this.subscriptions().filter(s =>
       s.userPrenom.toLowerCase().includes(q) ||
@@ -736,7 +745,8 @@ export class AdminDashboardComponent implements OnInit {
     this.adminService.getRevenueStats().subscribe(r => this.revenueStats.set(r));
     this.adminService.getAllPayments().subscribe(p => this.payments.set(p));
     this.adminService.getAllSubscriptions().subscribe(s => this.subscriptions.set(s));
-    this.adminService.getAllProperties(this.propertyStatusFilter() || undefined).subscribe(p => this.allProperties.set(p));
+    this.adminService.getAllProperties(this.propertyStatusFilter() || undefined)
+      .subscribe((p: Property[]) => this.allProperties.set(p));
   }
 
   approve(id: number): void { this.adminService.approve(id).subscribe(() => this.refreshAll()); }
@@ -758,13 +768,17 @@ export class AdminDashboardComponent implements OnInit {
   }
   dismissReport(id: number): void { this.adminService.dismissReport(id).subscribe(() => this.refreshAll()); }
 
-  private resetSearch(): void {
-    this.searchQuery.set('');
+  public resetSearch(): void {
+    this.searchQueryProperties.set('');
+    this.searchQueryUsers.set('');
+    this.searchQueryAudit.set('');
+    this.searchQueryPayments.set('');
+    this.searchQuerySubscriptions.set('');
     this.userRoleFilter = '';
     this.userStatusFilter = '';
   }
 
-    goToProperty(id: number): void {
+  goToProperty(id: number): void {
     window.open(`/properties/${id}`, '_blank');
   }
 
