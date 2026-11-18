@@ -1,5 +1,7 @@
 package ci.vio.backend.property;
 
+import ci.vio.backend.media.MediaRepository;
+import ci.vio.backend.scene.SceneRepository;
 import ci.vio.backend.subscription.Plan;
 import ci.vio.backend.subscription.SubscriptionService;
 import ci.vio.backend.user.User;
@@ -14,18 +16,24 @@ public class PropertyService {
 
     private final PropertyRepository propertyRepository;
     private final SubscriptionService subscriptionService;
+    private final MediaRepository mediaRepository;
+    private final SceneRepository sceneRepository;
 
     public PropertyService(PropertyRepository propertyRepository,
-                           SubscriptionService subscriptionService) {
+                           SubscriptionService subscriptionService,
+                           MediaRepository mediaRepository,
+                           SceneRepository sceneRepository) {
         this.propertyRepository = propertyRepository;
         this.subscriptionService = subscriptionService;
+        this.mediaRepository = mediaRepository;
+        this.sceneRepository = sceneRepository;
     }
 
     @Transactional(readOnly = true)
     public List<PropertyResponse> findAllByOwner(User owner) {
         return propertyRepository.findByOwner(owner)
                 .stream()
-                .map(PropertyResponse::from)
+                .map(p -> PropertyResponse.from(p, mediaRepository, sceneRepository))
                 .toList();
     }
 
@@ -34,7 +42,6 @@ public class PropertyService {
                                    String ville, String commune, Double prix,
                                    PropertyType type, Integer nombrePieces, Double surface) {
 
-        // 1. Vérifier la limite du plan
         Plan plan = subscriptionService.getCurrentPlan(owner);
         if (plan != null && plan.getMaxProperties() != null) {
             long currentCount = propertyRepository.findByOwner(owner).size();
@@ -66,7 +73,7 @@ public class PropertyService {
     public List<PropertyResponse> findAllApproved() {
         return propertyRepository.findByStatus(PropertyStatus.APPROVED)
                 .stream()
-                .map(PropertyResponse::from)
+                .map(p -> PropertyResponse.from(p, mediaRepository, sceneRepository))
                 .toList();
     }
 
@@ -77,6 +84,6 @@ public class PropertyService {
         if (property.getStatus() != PropertyStatus.APPROVED) {
             throw new PropertyNotFoundException(id);
         }
-        return PropertyResponse.from(property);
+        return PropertyResponse.from(property, mediaRepository, sceneRepository);
     }
 }

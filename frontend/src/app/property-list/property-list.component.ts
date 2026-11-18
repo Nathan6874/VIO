@@ -106,37 +106,63 @@ import { HeroBackgroundComponent } from '../hero-background/hero-background.comp
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @for (p of filteredProperties(); track p.id) {
               <a [routerLink]="['/properties', p.id]"
-                 class="group vio-card hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all cursor-pointer block">
-                <div class="flex items-start justify-between mb-4">
-                  <span class="badge-info">{{ p.type }}</span>
-                  <span class="text-xs text-stone-500 dark:text-stone-400">
-                    {{ p.nombrePieces ?? '?' }} p. · {{ p.surface ?? '?' }} m²
-                  </span>
+                class="group vio-card hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all cursor-pointer block overflow-hidden">
+                
+                <!-- Image de couverture -->
+                <div class="relative h-48 -mx-4 -mt-4 mb-4 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950 overflow-hidden">
+                  @if (p.coverImageUrl) {
+                    <img [src]="'http://localhost:8087' + p.coverImageUrl" 
+                        [alt]="p.titre"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  } @else {
+                    <div class="w-full h-full flex items-center justify-center">
+                      <lucide-icon [img]="icons.HomeIcon" class="w-12 h-12 text-stone-300 dark:text-stone-700"></lucide-icon>
+                    </div>
+                  }
+                  
+                  <!-- Badge Visite 3D -->
+                  @if (p.sceneCount > 0) {
+                    <div class="absolute top-3 right-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                      <span>🎥</span>
+                      <span>Visite 3D</span>
+                    </div>
+                  }
                 </div>
 
-                <h3 class="text-lg font-bold text-stone-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  {{ p.titre }}
-                </h3>
-
-                <div class="flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400 mb-4">
-                  <lucide-icon [img]="icons.MapPin" class="w-3.5 h-3.5"></lucide-icon>
-                  {{ p.commune }}, {{ p.ville }}
-                </div>
-
-                <p class="text-sm text-stone-600 dark:text-stone-400 line-clamp-2 mb-4">
-                  {{ p.description }}
-                </p>
-
-                <div class="flex items-end justify-between pt-4 border-t border-stone-100 dark:border-stone-800">
-                  <div>
-                    <p class="text-2xl font-black text-stone-900 dark:text-white">
-                      {{ p.prix.toLocaleString('fr-FR') }}
-                      <span class="text-sm font-medium text-stone-500">FCFA</span>
-                    </p>
+                <div class="px-1">
+                  <div class="flex items-start justify-between mb-2">
+                    <span class="badge-info">{{ p.type }}</span>
+                    <span class="text-xs text-stone-500 dark:text-stone-400">
+                      @if (p.nombrePieces) { {{ p.nombrePieces }} p. } @else { — }
+                      · 
+                      @if (p.surface) { {{ p.surface }} m² } @else { — }
+                    </span>
                   </div>
-                  <span class="text-xs text-stone-400 dark:text-stone-500">
-                    {{ p.owner.prenom }} {{ p.owner.nom }}
-                  </span>
+
+                  <h3 class="text-lg font-bold text-stone-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {{ p.titre }}
+                  </h3>
+
+                  <div class="flex items-center gap-1.5 text-sm text-stone-500 dark:text-stone-400 mb-3">
+                    <lucide-icon [img]="icons.MapPin" class="w-3.5 h-3.5"></lucide-icon>
+                    {{ p.commune }}, {{ p.ville }}
+                  </div>
+
+                  <p class="text-sm text-stone-600 dark:text-stone-400 line-clamp-2 mb-4">
+                    {{ p.description }}
+                  </p>
+
+                  <div class="flex items-end justify-between pt-4 border-t border-stone-100 dark:border-stone-800">
+                    <div>
+                      <p class="text-2xl font-black text-stone-900 dark:text-white">
+                        {{ p.prix.toLocaleString('fr-FR') }}
+                        <span class="text-sm font-medium text-stone-500">FCFA</span>
+                      </p>
+                    </div>
+                    <span class="text-xs text-stone-400 dark:text-stone-500">
+                      {{ p.owner.prenom }} {{ p.owner.nom }}
+                    </span>
+                  </div>
                 </div>
               </a>
             }

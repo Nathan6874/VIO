@@ -18,6 +18,8 @@ export interface Property {
   status: string;
   createdAt: string;
   owner: PropertyOwner;
+  coverImageUrl: string | null;
+  sceneCount: number;
 }
 
 export interface CreatePropertyRequest {
