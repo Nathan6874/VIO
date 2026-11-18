@@ -19,7 +19,10 @@ import { ThemeService } from '../services/theme.service';
 
           <!-- Logo -->
           <a routerLink="/" class="flex items-center gap-2 group">
-            <img src="assets/logo-vio.svg" alt="VIO" class="h-10" />
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center shadow-sm">
+              <span class="text-white font-black text-lg">V</span>
+            </div>
+            <span class="text-xl font-black text-stone-900 dark:text-white">VIO</span>
           </a>
 
           <!-- Desktop nav -->

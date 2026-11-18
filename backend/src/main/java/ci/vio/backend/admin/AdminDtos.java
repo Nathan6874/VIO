@@ -68,4 +68,35 @@ public class AdminDtos {
             long openReports,
             long totalReports
     ) {}
+
+    // === Payments ===
+    public record PaymentAdminDto(
+            Long id,
+            Long userId,
+            String userPrenom,
+            String userNom,
+            String userWhatsapp,
+            String planCode,
+            String planName,
+            Integer amountXof,
+            String status,
+            String provider,
+            java.time.Instant createdAt,
+            java.time.Instant paidAt
+    ) {}
+
+    // === Subscriptions ===
+    public record SubscriptionAdminDto(
+            Long id,
+            Long userId,
+            String userPrenom,
+            String userNom,
+            String userWhatsapp,
+            String planCode,
+            String planName,
+            String status,
+            java.time.Instant startDate,
+            java.time.Instant endDate,
+            java.time.Instant createdAt
+    ) {}
 }

@@ -19,7 +19,13 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              }
+              },
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "/assets/"
+              },
+              "src/favicon.svg"
             ],
             "styles": [
               "node_modules/pannellum/build/pannellum.css",

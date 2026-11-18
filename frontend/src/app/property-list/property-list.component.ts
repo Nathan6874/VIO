@@ -6,17 +6,20 @@ import { LucideAngularModule, Search, MapPin, Home as HomeIcon, Sparkles } from 
 import { Property } from '../models/property.model';
 import { PropertyService } from '../services/property.service';
 import { AuthService } from '../services/auth.service';
+import { HeroBackgroundComponent } from '../hero-background/hero-background.component';
+
 
 @Component({
   selector: 'app-property-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, LucideAngularModule],
+  imports: [CommonModule, RouterLink, FormsModule, LucideAngularModule, HeroBackgroundComponent],
   template: `
     <div class="min-h-screen bg-stone-50 dark:bg-stone-950">
 
       <!-- Hero -->
       <section class="relative overflow-hidden bg-gradient-to-br from-stone-50 via-white to-blue-50/60 dark:from-stone-950 dark:via-stone-900 dark:to-blue-950/30 border-b border-stone-200 dark:border-stone-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+          <app-hero-background />
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
           <div class="max-w-3xl">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 text-xs font-semibold mb-6 border border-blue-200 dark:border-blue-900">
               <lucide-icon [img]="icons.Sparkles" class="w-3.5 h-3.5"></lucide-icon>

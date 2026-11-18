@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { Property } from '../models/property.model';
 import { environment } from '../../environments/environment';
 
+// ===================== INTERFACES =====================
+
 export interface AdminStats {
   totalUsers: number;
   totalOwners: number;
@@ -51,6 +53,43 @@ export interface AuditLog {
   createdAt: string;
 }
 
+export interface AdminPayment {
+  id: number;
+  userId: number;
+  userPrenom: string;
+  userNom: string;
+  userWhatsapp: string;
+  planCode: string;
+  planName: string;
+  amountXof: number;
+  status: string;
+  provider: string;
+  createdAt: string;
+  paidAt: string | null;
+}
+
+export interface AdminSubscription {
+  id: number;
+  userId: number;
+  userPrenom: string;
+  userNom: string;
+  userWhatsapp: string;
+  planCode: string;
+  planName: string;
+  status: string;
+  startDate: string;
+  endDate: string | null;
+  createdAt: string;
+}
+
+export interface RevenueStats {
+  totalRevenueXof: number;
+  activeSubscriptions: number;
+  totalSuccessPayments: number;
+}
+
+// ===================== SERVICE =====================
+
 @Injectable({
   providedIn: 'root'
 })
@@ -64,6 +103,10 @@ export class AdminService {
   // === Stats ===
   getStats(): Observable<AdminStats> {
     return this.http.get<AdminStats>(`${this.apiUrl}/stats`);
+  }
+
+  getRevenueStats(): Observable<RevenueStats> {
+    return this.http.get<RevenueStats>(`${this.apiUrl}/stats/revenue`);
   }
 
   // === Annonces ===
@@ -117,5 +160,38 @@ export class AdminService {
   // === Audit ===
   getAuditLogs(): Observable<AuditLog[]> {
     return this.http.get<AuditLog[]>(`${this.apiUrl}/audit`);
+  }
+
+  // === Payments (NOUVEAU) ===
+  getAllPayments(): Observable<AdminPayment[]> {
+    return this.http.get<AdminPayment[]>(`${this.apiUrl}/payments`);
+  }
+
+  // === Subscriptions (NOUVEAU) ===
+  getAllSubscriptions(): Observable<AdminSubscription[]> {
+    return this.http.get<AdminSubscription[]>(`${this.apiUrl}/subscriptions`);
+  }
+
+    // === Toutes les annonces avec filtre ===
+  getAllProperties(status?: string): Observable<Property[]> {
+    const url = status
+      ? `${this.apiUrl}/properties/all?status=${status}`
+      : `${this.apiUrl}/properties/all`;
+    return this.http.get<Property[]>(url);
+  }
+
+  // === Suspendre une annonce ===
+  suspendProperty(id: number, reason: string): Observable<Property> {
+    return this.http.put<Property>(`${this.apiUrl}/properties/${id}/suspend`, { reason });
+  }
+
+  // === Supprimer une annonce ===
+  deleteProperty(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/properties/${id}`);
+  }
+
+  // === Supprimer un utilisateur ===
+  deleteUser(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/users/${id}`);
   }
 }

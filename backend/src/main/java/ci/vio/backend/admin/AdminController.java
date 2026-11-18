@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import ci.vio.backend.property.PropertyStatus;
 
 import java.util.List;
 import java.util.Map;
@@ -27,14 +28,19 @@ public class AdminController {
         this.userService = userService;
     }
 
-    // === Stats ===
-
     @GetMapping("/stats")
     public AdminStatsDto getStats() {
         return adminService.getStats();
     }
 
-    // === Annonces ===
+    @GetMapping("/stats/revenue")
+    public Map<String, Object> getRevenueStats() {
+        return Map.of(
+                "totalRevenueXof", adminService.getTotalRevenue(),
+                "activeSubscriptions", adminService.getActiveSubscriptionsCount(),
+                "totalSuccessPayments", adminService.getTotalSuccessPayments()
+        );
+    }
 
     @GetMapping("/properties")
     public List<PropertyResponse> getPending() {
@@ -50,15 +56,6 @@ public class AdminController {
     public PropertyResponse reject(@PathVariable Long id, Authentication auth) {
         return adminService.reject(id, getUser(auth));
     }
-
-    @PutMapping("/properties/{id}/moderate")
-    public PropertyResponse moderate(@PathVariable Long id,
-                                     @RequestBody ModeratePropertyRequest request,
-                                     Authentication auth) {
-        return adminService.moderateProperty(id, getUser(auth), request);
-    }
-
-    // === Users ===
 
     @GetMapping("/users")
     public List<AdminUserDto> findAllUsers() {
@@ -84,16 +81,9 @@ public class AdminController {
         return adminService.reactivateUser(id, getUser(auth));
     }
 
-    // === Reports ===
-
     @GetMapping("/reports")
     public List<ReportDto> findAllReports() {
         return adminService.findAllReports();
-    }
-
-    @GetMapping("/reports/open")
-    public List<ReportDto> findOpenReports() {
-        return adminService.findOpenReports();
     }
 
     @PutMapping("/reports/{id}/resolve")
@@ -108,14 +98,22 @@ public class AdminController {
         return adminService.dismissReport(id, getUser(auth));
     }
 
-    // === Audit ===
-
     @GetMapping("/audit")
     public List<AuditLogDto> getAuditLogs() {
         return adminService.findRecentAuditLogs();
     }
 
-    // === Helpers ===
+    // === NOUVEAU : Paiements ===
+    @GetMapping("/payments")
+    public List<PaymentAdminDto> findAllPayments() {
+        return adminService.findAllPayments();
+    }
+
+    // === NOUVEAU : Abonnements ===
+    @GetMapping("/subscriptions")
+    public List<SubscriptionAdminDto> findAllSubscriptions() {
+        return adminService.findAllSubscriptions();
+    }
 
     private User getUser(Authentication auth) {
         return userService.findByWhatsapp(auth.getName())
@@ -132,5 +130,35 @@ public class AdminController {
     public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException ex) {
         return ResponseEntity.status(400)
                 .body(Map.of("error", "BadRequest", "message", ex.getMessage()));
+    }
+
+    // === NOUVEAU : Toutes les annonces avec filtre statut ===
+    @GetMapping("/properties/all")
+    public List<PropertyResponse> getAllProperties(
+            @RequestParam(required = false) PropertyStatus status) {
+        return adminService.findAllProperties(status);
+    }
+
+    // === NOUVEAU : Suspendre une annonce ===
+    @PutMapping("/properties/{id}/suspend")
+    public PropertyResponse suspendProperty(@PathVariable Long id,
+                                            @RequestBody Map<String, String> body,
+                                            Authentication auth) {
+        String reason = body.getOrDefault("reason", "Non spécifiée");
+        return adminService.suspendProperty(id, getUser(auth), reason);
+    }
+
+    // === NOUVEAU : Supprimer une annonce ===
+    @DeleteMapping("/properties/{id}")
+    public ResponseEntity<Void> deleteProperty(@PathVariable Long id, Authentication auth) {
+        adminService.deleteProperty(id, getUser(auth));
+        return ResponseEntity.noContent().build();
+    }
+
+    // === NOUVEAU : Supprimer un utilisateur ===
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id, Authentication auth) {
+        adminService.deleteUser(id, getUser(auth));
+        return ResponseEntity.noContent().build();
     }
 }

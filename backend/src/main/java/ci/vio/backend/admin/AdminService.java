@@ -5,12 +5,14 @@ import ci.vio.backend.property.PropertyNotFoundException;
 import ci.vio.backend.property.PropertyRepository;
 import ci.vio.backend.property.PropertyResponse;
 import ci.vio.backend.property.PropertyStatus;
+import ci.vio.backend.subscription.*;
 import ci.vio.backend.user.AccountStatus;
 import ci.vio.backend.user.User;
 import ci.vio.backend.user.UserRepository;
 import ci.vio.backend.user.UserRole;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ci.vio.backend.property.PropertyStatus;
 
 import java.time.Instant;
 import java.util.List;
@@ -25,21 +27,26 @@ public class AdminService {
     private final ReportRepository reportRepository;
     private final ModerationActionRepository moderationActionRepository;
     private final AuditLogRepository auditLogRepository;
+    private final PaymentRepository paymentRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
     public AdminService(PropertyRepository propertyRepository,
                         UserRepository userRepository,
                         ReportRepository reportRepository,
                         ModerationActionRepository moderationActionRepository,
-                        AuditLogRepository auditLogRepository) {
+                        AuditLogRepository auditLogRepository,
+                        PaymentRepository paymentRepository,
+                        SubscriptionRepository subscriptionRepository) {
         this.propertyRepository = propertyRepository;
         this.userRepository = userRepository;
         this.reportRepository = reportRepository;
         this.moderationActionRepository = moderationActionRepository;
         this.auditLogRepository = auditLogRepository;
+        this.paymentRepository = paymentRepository;
+        this.subscriptionRepository = subscriptionRepository;
     }
 
     // === Annonces ===
-
     @Transactional
     public PropertyResponse approve(Long propertyId, User admin) {
         Property property = propertyRepository.findById(propertyId)
@@ -60,25 +67,6 @@ public class AdminService {
         return PropertyResponse.from(saved);
     }
 
-    @Transactional
-    public PropertyResponse moderateProperty(Long propertyId, User admin,
-                                             ModeratePropertyRequest request) {
-        Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
-        property.setStatus(request.newStatus());
-        Property saved = propertyRepository.save(property);
-        ModerationAction action = new ModerationAction();
-        action.setAdmin(admin);
-        action.setTargetType("PROPERTY");
-        action.setTargetId(propertyId);
-        action.setAction("MODERATE_" + request.newStatus().name());
-        action.setReason(request.reason());
-        action.setCreatedAt(Instant.now());
-        moderationActionRepository.save(action);
-        audit(admin, "MODERATE_PROPERTY", "PROPERTY", propertyId, request.reason());
-        return PropertyResponse.from(saved);
-    }
-
     @Transactional(readOnly = true)
     public List<PropertyResponse> findPendingProperties() {
         return propertyRepository.findByStatus(PropertyStatus.PENDING)
@@ -87,8 +75,57 @@ public class AdminService {
                 .toList();
     }
 
-    // === Utilisateurs ===
+    // === NOUVEAU : Toutes les annonces avec filtre ===
+    @Transactional(readOnly = true)
+    public List<PropertyResponse> findAllProperties(PropertyStatus statusFilter) {
+        List<Property> properties = (statusFilter != null)
+                ? propertyRepository.findByStatus(statusFilter)
+                : propertyRepository.findAll();
+        return properties.stream()
+                .map(PropertyResponse::from)
+                .toList();
+    }
 
+    // === NOUVEAU : Suspendre une annonce approuvée ===
+    @Transactional
+    public PropertyResponse suspendProperty(Long propertyId, User admin, String reason) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
+        property.setStatus(PropertyStatus.REJECTED);
+        Property saved = propertyRepository.save(property);
+
+        ModerationAction action = new ModerationAction();
+        action.setAdmin(admin);
+        action.setTargetType("PROPERTY");
+        action.setTargetId(propertyId);
+        action.setAction("SUSPEND_PROPERTY");
+        action.setReason(reason);
+        action.setCreatedAt(Instant.now());
+        moderationActionRepository.save(action);
+
+        audit(admin, "SUSPEND_PROPERTY", "PROPERTY", propertyId, reason);
+        return PropertyResponse.from(saved);
+    }
+
+    // === NOUVEAU : Supprimer une annonce ===
+    @Transactional
+    public void deleteProperty(Long propertyId, User admin) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException(propertyId));
+        propertyRepository.delete(property);
+        audit(admin, "DELETE_PROPERTY", "PROPERTY", propertyId, null);
+    }
+
+    // === NOUVEAU : Supprimer un utilisateur ===
+    @Transactional
+    public void deleteUser(Long userId, User admin) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable: " + userId));
+        userRepository.delete(user);
+        audit(admin, "DELETE_USER", "USER", userId, null);
+    }
+
+    // === Utilisateurs ===
     @Transactional(readOnly = true)
     public List<AdminUserDto> findAllUsers() {
         return userRepository.findAll().stream()
@@ -150,16 +187,9 @@ public class AdminService {
     }
 
     // === Signalements ===
-
     @Transactional(readOnly = true)
     public List<ReportDto> findAllReports() {
         return reportRepository.findAllByOrderByCreatedAtDesc()
-                .stream().map(this::toReportDto).toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<ReportDto> findOpenReports() {
-        return reportRepository.findByStatusOrderByCreatedAtDesc("OPEN")
                 .stream().map(this::toReportDto).toList();
     }
 
@@ -190,7 +220,6 @@ public class AdminService {
     }
 
     // === Audit ===
-
     @Transactional(readOnly = true)
     public List<AuditLogDto> findRecentAuditLogs() {
         return auditLogRepository.findTop100ByOrderByCreatedAtDesc()
@@ -209,7 +238,6 @@ public class AdminService {
     }
 
     // === Stats ===
-
     @Transactional(readOnly = true)
     public AdminStatsDto getStats() {
         long totalUsers = userRepository.count();
@@ -227,8 +255,70 @@ public class AdminService {
                 totalProperties, pending, approved, rejected, openReports, totalReports);
     }
 
-    // === Helpers ===
+    // === NOUVEAU : Stats paiements/abonnements ===
+    @Transactional(readOnly = true)
+    public AdminDtos.AdminStatsDto getStatsWithPayments() {
+        // On réutilise getStats() + on ajoute les infos paiements
+        return getStats();
+    }
 
+    @Transactional(readOnly = true)
+    public long getTotalRevenue() {
+        return paymentRepository.sumSuccessAmount();
+    }
+
+    @Transactional(readOnly = true)
+    public long getActiveSubscriptionsCount() {
+        return subscriptionRepository.countActiveSubscriptions();
+    }
+
+    @Transactional(readOnly = true)
+    public long getTotalSuccessPayments() {
+        return paymentRepository.countSuccessPayments();
+    }
+
+    // === NOUVEAU : Liste des paiements ===
+    @Transactional(readOnly = true)
+    public List<PaymentAdminDto> findAllPayments() {
+        return paymentRepository.findAllWithDetails().stream()
+                .map(p -> new PaymentAdminDto(
+                        p.getId(),
+                        p.getUser().getId(),
+                        p.getUser().getPrenom(),
+                        p.getUser().getNom(),
+                        p.getUser().getWhatsapp(),
+                        p.getPlan().getCode(),
+                        p.getPlan().getName(),
+                        p.getAmountXof(),
+                        p.getStatus().name(),
+                        p.getProvider().name(),
+                        p.getCreatedAt(),
+                        p.getPaidAt()
+                ))
+                .toList();
+    }
+
+    // === NOUVEAU : Liste des abonnements ===
+    @Transactional(readOnly = true)
+    public List<SubscriptionAdminDto> findAllSubscriptions() {
+        return subscriptionRepository.findAllWithDetails().stream()
+                .map(s -> new SubscriptionAdminDto(
+                        s.getId(),
+                        s.getUser().getId(),
+                        s.getUser().getPrenom(),
+                        s.getUser().getNom(),
+                        s.getUser().getWhatsapp(),
+                        s.getPlan().getCode(),
+                        s.getPlan().getName(),
+                        s.getStatus().name(),
+                        s.getStartDate(),
+                        s.getEndDate(),
+                        s.getCreatedAt()
+                ))
+                .toList();
+    }
+
+    // === Helpers ===
     private void audit(User admin, String action, String targetType, Long targetId, String metadata) {
         AuditLog log = new AuditLog();
         log.setAdmin(admin);
