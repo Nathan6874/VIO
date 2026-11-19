@@ -14,6 +14,7 @@ import { SubscriptionMockPayComponent } from './subscription/subscription-mock-p
 import { SubscriptionSuccessComponent } from './subscription/subscription-success.component';
 import { ProfileComponent } from './profile/profile.component';
 import { OwnerStatsComponent } from './owner-stats/owner-stats.component';
+import { PropertyEditComponent } from './property-edit/property-edit.component';
 
 export const routes: Routes = [
   { path: '', component: PropertyListComponent },
@@ -29,4 +30,5 @@ export const routes: Routes = [
   { path: 'owner/subscription/success', component: SubscriptionSuccessComponent, canActivate: [authGuard] },
   { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
   { path: 'owner/stats', component: OwnerStatsComponent, canActivate: [authGuard] },
+  { path: 'owner/properties/:id/edit', component: PropertyEditComponent, canActivate: [authGuard] },
 ];

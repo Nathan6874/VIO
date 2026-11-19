@@ -86,4 +86,40 @@ public class PropertyService {
         }
         return PropertyResponse.from(property, mediaRepository, sceneRepository);
     }
+
+    @Transactional
+    public PropertyResponse update(Long id, User currentUser,
+                                   String titre, String description,
+                                   String ville, String commune, Double prix,
+                                   PropertyType type, Integer nombrePieces, Double surface) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new PropertyNotFoundException(id));
+
+        // Vérifier que l'utilisateur est bien le propriétaire
+        if (property.getOwner() == null || !property.getOwner().getId().equals(currentUser.getId())) {
+            throw new PropertyNotFoundException(id);
+        }
+
+        property.setTitre(titre);
+        property.setDescription(description);
+        property.setVille(ville);
+        property.setCommune(commune);
+        property.setPrix(prix);
+        property.setType(type);
+        property.setNombrePieces(nombrePieces);
+        property.setSurface(surface);
+
+        Property saved = propertyRepository.save(property);
+        return PropertyResponse.from(saved, mediaRepository, sceneRepository);
+    }
+
+    @Transactional(readOnly = true)
+    public PropertyResponse findByIdForOwner(Long id, User currentUser) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new PropertyNotFoundException(id));
+        if (property.getOwner() == null || !property.getOwner().getId().equals(currentUser.getId())) {
+            throw new PropertyNotFoundException(id);
+        }
+        return PropertyResponse.from(property, mediaRepository, sceneRepository);
+    }
 }

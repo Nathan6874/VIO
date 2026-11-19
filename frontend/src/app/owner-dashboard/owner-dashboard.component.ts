@@ -90,9 +90,8 @@ import { Subscription, SubscriptionService } from '../services/subscription.serv
         } @else {
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @for (p of properties(); track p.id) {
-              <a [routerLink]="['/properties', p.id]"
-                 class="group vio-card hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all cursor-pointer block">
-
+              <div class="group vio-card hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all">
+                
                 <div class="flex items-start justify-between mb-3">
                   <span class="badge"
                         [class.badge-success]="p.status === 'APPROVED'"
@@ -105,7 +104,7 @@ import { Subscription, SubscriptionService } from '../services/subscription.serv
                   </span>
                 </div>
 
-                <h3 class="text-lg font-bold text-stone-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                <h3 class="text-lg font-bold text-stone-900 dark:text-white mb-2">
                   {{ p.titre }}
                 </h3>
 
@@ -118,14 +117,26 @@ import { Subscription, SubscriptionService } from '../services/subscription.serv
                   {{ p.nombrePieces ?? '?' }} pièces · {{ p.surface ?? '?' }} m²
                 </p>
 
-                <div class="flex items-end justify-between pt-4 border-t border-stone-100 dark:border-stone-800">
+                <div class="flex items-end justify-between pt-4 border-t border-stone-100 dark:border-stone-800 mb-3">
                   <p class="text-2xl font-black text-stone-900 dark:text-white">
                     {{ p.prix.toLocaleString('fr-FR') }}
                     <span class="text-sm font-medium text-stone-500">FCFA</span>
                   </p>
-                  <lucide-icon [img]="icons.Eye" class="w-4 h-4 text-stone-400 dark:text-stone-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"></lucide-icon>
                 </div>
-              </a>
+
+                <!-- Actions -->
+                <div class="flex gap-2">
+                  <a [routerLink]="['/properties', p.id]" 
+                    class="flex-1 btn-secondary text-sm text-center">
+                    <lucide-icon [img]="icons.Eye" class="w-4 h-4 inline"></lucide-icon>
+                    Voir
+                  </a>
+                  <a [routerLink]="['/owner/properties', p.id, 'edit']" 
+                    class="flex-1 btn-secondary text-sm text-center text-blue-600 dark:text-blue-400">
+                    ✏️ Modifier
+                  </a>
+                </div>
+              </div>
             }
           </div>
         }

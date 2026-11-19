@@ -84,4 +84,30 @@ public class PropertyController {
                 ));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<PropertyResponse> update(@PathVariable Long id,
+                                                   @RequestBody CreatePropertyRequest request,
+                                                   Authentication authentication) {
+        User owner = getUserFromAuthentication(authentication);
+        PropertyResponse response = propertyService.update(
+                id,
+                owner,
+                request.titre(),
+                request.description(),
+                request.ville(),
+                request.commune(),
+                request.prix(),
+                request.type(),
+                request.nombrePieces(),
+                request.surface()
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PropertyResponse> findById(@PathVariable Long id, Authentication authentication) {
+        User owner = getUserFromAuthentication(authentication);
+        return ResponseEntity.ok(propertyService.findByIdForOwner(id, owner));
+    }
+
 }
